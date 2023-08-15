@@ -87,11 +87,14 @@ app.use("/users/auth", userAuthRouter);
 
 //Load Admin routes
 const adminIndexRouter = require("./admin/routes/indexRouter")
-
+const adminMenuRouter = require('./admin/routes/menu/menuRouter');
+const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
 
 
 //Use Admin routes
 app.use("/admin", adminIndexRouter);
+app.use("/admin/menu", adminMenuRouter);
+app.use("/admin/menuItems", adminMenuItemsRouter);
 
 
 app.use(express.static('public'));
@@ -107,6 +110,7 @@ app.use((err, req, res, next) => {
 
     logger.error(err.message, err);
     res.status(400).send('Sorry, something went wrong');
+
 });
 
 
