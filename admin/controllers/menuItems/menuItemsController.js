@@ -25,29 +25,29 @@ const menuItemsController = {
     }, // ./get all menu
 
 
-    //Get all menuItems items
+    //.................Get all menuItems items............................
     index: async (req, res) => {
         try{
 
-            const page = req.query.page || 1;
-            const pageSize = req.query.pageSize || 15;
+            // const page = req.query.page || 1;
+            // const pageSize = req.query.pageSize || 15;
 
             const menuItems = await db('menuItems')
                 .join('menu', 'menuItems.menuId', '=','menu.id')
                 .select('menuItems.id', 'menuItems.name', 'menuItems.price',
                     'menuItems.slug','menuItems.image','menu.name as menu'
                     )
-                .limit(pageSize)
-                .offset((page - 1) * pageSize);
-
-            const total = await db('menuItems')
-                .count('* as total')
+            //     .limit(pageSize)
+            //     .offset((page - 1) * pageSize);
+            //
+            // const total = await db('menuItems')
+            //     .count('* as total')
 
             return res.status(200).send({
                 menuItems,
-                page,
-                pageSize,
-                totalRecords: total[0].total
+                // page,
+                // pageSize,
+                // totalRecords: total[0].total
             });
 
         }catch (e) {
@@ -58,7 +58,7 @@ const menuItemsController = {
     }, // ./get all menuItems items
 
 
-    //Save menuItems item
+    //......................Save menuItems item,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
     create: async (req, res) => {
 
         try{
@@ -72,7 +72,8 @@ const menuItemsController = {
 
             if (req.files) {
                 image = req.files.image;
-                imgName = name.replaceAll(' ', '') + moment().format() + image.mimetype.replace('image/', '.');
+                imgName = name.toLowerCase().replaceAll(' ', '')
+                    + moment().format() + image.mimetype.replace('image/', '.');
                 image.mv(uploadDir + imgName, (err) => {
                     if (err) return res.status(400).send("Leider war der Upload nicht erfolgreich"); //Sorry, upload was not successful
                 });
@@ -101,7 +102,7 @@ const menuItemsController = {
         }
     },// ./Save menuItem
 
-    //query only one item
+    //......................query only one item.............................
     view: async (req, res) => {
         try{
             const { slug } = req.body;
@@ -125,26 +126,23 @@ const menuItemsController = {
 
 
 
-    //Edit menuItem
+    //.........................Edit menuItem...................................
     edit: async (req, res) => {
 
         try{
+            const { id, name, price, choiceOf, shortDescription,
+                description, menuId, image
+            } = req.body;
 
-            console.log(req.body)
-            console.log(req.files)
-            return res.status(200).end()
 
-            const id = req.body.id;
-            const name = req.body.name.toLowerCase();
-            let image = null;
-            let imgName = "";
-
+            let imgName = image;
 
 
             if (req.files) {
+
                 //Remove old image first
-                if (req.body.oldImage.trim()){
-                    fs.unlink(uploadDir + req.body.oldImage, (err) => {
+                if (image.trim()){ //Old image
+                    fs.unlink(uploadDir + image, (err) => {
                         if (err) {
                             logger.error(err);
                         }
@@ -152,40 +150,32 @@ const menuItemsController = {
                 }
 
                 //Insert new image
-                image = req.files.image;
-                imgName = name.replaceAll(' ', '') + moment().format() + image.mimetype.replace('image/', '.')
-                image.mv(uploadDir + imgName, (err) => {
+                let newImage = req.files.newImage;
+                imgName = name.toLowerCase().replaceAll(' ', '')
+                    + moment().format() + newImage.mimetype.replace('image/', '.')
+
+                newImage.mv(uploadDir + imgName, (err) => {
                     if (err) return res.status(400).send("Leider war der Upload nicht erfolgreich"); //Sorry, upload was not successful
                 });
             }
 
             //Validate here
 
+            const slug = slugify(
+                `${name} ${moment().unix()}`,
+                {lower: true}
+            )
+
             //Edit in db
-            if (req.files){
-                await db('categories').where('id', id )
+
+                await db('menuItems').where('id', id )
                     .update({
-                        name,
-                        image: imgName
+                        menuId, name, price, shortDescription, image: imgName, description,
+                        choiceOf, slug
                     });
-            }else {
-                await db('categories').where('id', id )
-                    .update({
-                        name,
-                    });
-            }
 
 
-            const path = process.env.NODE_ENV !== 'production' ? `http://${req.headers.host}/images/categories/`
-                : `https://${req.headers.host}/images/categories/`;
-
-            return  res.status(200).send(
-                {
-                    name,
-                    path,
-                    image: imgName
-                },
-            );
+            return  res.status(200).end();
 
 
         }catch (e) {
@@ -198,7 +188,7 @@ const menuItemsController = {
 
 
 
-    //Delete menuItems item
+    //.................Delete menuItems item........................
     destroy: async (req, res) => {
         try{
             const { id, image } = req.body;
