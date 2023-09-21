@@ -6,8 +6,6 @@ const userAuthController = require("../../../controllers/users/auth/userAuthCont
 //Register new user
 router.post("/register", userAuthController.create);
 
-//Verify Phone number
-router.post('/verify', userAuthController.verify);
 
 //Login
 router.post('/login', userAuthController.login);

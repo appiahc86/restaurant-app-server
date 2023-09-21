@@ -3,6 +3,7 @@ const logger = require("../../../winston");
 const moment = require("moment");
 const fs = require('fs');
 const path = require('path');
+const slugify = require("slugify");
 const uploadDir = path.join(__dirname, '../../../public/images/menu/');
 
 const menuController = {
@@ -43,9 +44,15 @@ const menuController = {
 
             //Validate here
 
+            const slug = slugify(
+                `${name}`,
+                {lower: true}
+            )
+
             //Save to db
             const menu = await db('menu').insert({
                 name,
+                slug,
                 image: imgName
             });
 
@@ -57,7 +64,7 @@ const menuController = {
                        id: menu[0],
                        path,
                        image: imgName
-                   },
+                   }
                    );
 
 
@@ -101,17 +108,24 @@ const menuController = {
 
             //Validate here
 
+            const slug = slugify(
+                `${name}`,
+                {lower: true}
+            )
+
             //Edit in db
             if (req.files){
                 await db('menu').where('id', id )
                     .update({
                         name,
+                        slug,
                         image: imgName
                     });
             }else {
                 await db('menu').where('id', id )
                     .update({
                         name,
+                        slug
                     });
             }
 

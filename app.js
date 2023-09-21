@@ -10,7 +10,7 @@ const db = require("./config/db");
 const uploader = require("express-fileupload");
 const logger = require("./winston");
 const transactionJob = require("./cron");
-
+const axios = require("axios");
 
 app.use(express.json());
 app.use(cors());
@@ -78,24 +78,34 @@ app.use((req, res, next) => {
 
 
 //Load routes
+const userIndexRouter = require("./client/routes/users/index");
 const userAuthRouter = require("./client/routes/users/auth/userAuthRoutes");
+const menuRouter = require("./client/routes/menu/menuRouter");
+const menuItemsRouter = require("./client/routes/menuItems/menuItemsRouter");
+const ordersRouter = require("./client/routes/orders/ordersRouter");
 
 
 //Use Routes
+app.use("/users", userIndexRouter);
 app.use("/users/auth", userAuthRouter);
+app.use("/menu", menuRouter);
+app.use("/menuItems", menuItemsRouter);
+app.use("/orders", ordersRouter);
 
 
 //Load Admin routes
 const adminIndexRouter = require("./admin/routes/indexRouter")
 const adminMenuRouter = require('./admin/routes/menu/menuRouter');
 const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
+const adminOrdersRouter = require("./admin/routes/orders/ordersRouter")
+const {log} = require("winston");
 
 
 //Use Admin routes
 app.use("/admin", adminIndexRouter);
 app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
-
+app.use("/admin/orders", adminOrdersRouter);
 
 app.use(express.static('public'));
 
@@ -109,14 +119,13 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
 
     logger.error(err.message, err);
-    res.status(400).send('Sorry, something went wrong');
+    res.status(400).send('Sorry, Entschuldigung, etwas ist schief gelaufen');
 
 });
 
 
 if (process.env.NODE_ENV !== 'production'){
-    server.listen(port, () => {
+    server.listen(port, async () => {
         logger.info(`server running on port ${port}`);
-        logger.info(new Date().toString());
     })
 }else server.listen();

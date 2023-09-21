@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
-const userIndexController = require("../../controllers/users");
 const auth = require("../../middleware/auth");
+const menuController = require('../../controllers/menu/menuController');
 
-router.post("/update", auth, userIndexController.update);
+//Get menuItems
+router.get('/', menuController.index);
 
 
 module.exports = router;

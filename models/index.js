@@ -2,12 +2,16 @@ const User = require("./User");
 const AdminUser = require("./AdminUser");
 const Menu = require("./Menu");
 const MenuItem = require("./MenuItem");
+const Order = require("./Order");
+const OrderDetails = require("./OrderDetail");
+const Payment = require("./Payment");
 
 
 
 
 const migrations =  [
-    User, AdminUser, Menu, MenuItem
+    User, AdminUser, Menu, MenuItem,
+    Order, OrderDetails, Payment
 ]
 
   const runMigrations = async () => {

@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
-const userIndexController = require("../../controllers/users");
 const auth = require("../../middleware/auth");
+const ordersController = require('../../controllers/orders/ordersController');
 
-router.post("/update", auth, userIndexController.update);
+//Gel today's orders
+router.get('/', ordersController.index);
 
 
 module.exports = router;

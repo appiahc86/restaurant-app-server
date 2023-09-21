@@ -11,7 +11,7 @@ const MenuItem = async () => {
             table.string('shortDescription');
             table.string('image');
             table.text('description');
-            table.json('choiceOf').defaultTo("[]");
+            table.jsonb('choiceOf').defaultTo("[]");
             table.string('slug').notNullable().unique().index();
             table.timestamp('createdAt');
             table.engine('InnoDB');
