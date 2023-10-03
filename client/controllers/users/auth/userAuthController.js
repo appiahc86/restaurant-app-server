@@ -9,7 +9,6 @@ const moment = require("moment");
 const CryptoJS = require("crypto-js");
 const { passwordResetMail } = require("../../../../functions/sendMail")
 
-const notVerifiedError = 'Sorry, this is not a valid momo number or not registered on this network';
 
 const userAuthController = {
 

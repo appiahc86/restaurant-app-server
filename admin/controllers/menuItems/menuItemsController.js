@@ -36,7 +36,7 @@ const menuItemsController = {
                 .join('menu', 'menuItems.menuId', '=','menu.id')
                 .select('menuItems.id', 'menuItems.name', 'menuItems.price',
                     'menuItems.slug','menuItems.image','menu.name as menu'
-                    )
+                )
             //     .limit(pageSize)
             //     .offset((page - 1) * pageSize);
             //
@@ -71,9 +71,9 @@ const menuItemsController = {
             let imgName = "";
 
             if (req.files) {
+
                 image = req.files.image;
-                imgName = name.toLowerCase().replaceAll(' ', '')
-                    + moment().format() + image.mimetype.replace('image/', '.');
+                imgName = name.toLowerCase().split(' ').join('')+moment().format() + image.mimetype.replace('image/', '.');
                 image.mv(uploadDir + imgName, (err) => {
                     if (err) return res.status(400).send("Leider war der Upload nicht erfolgreich"); //Sorry, upload was not successful
                 });
@@ -86,9 +86,9 @@ const menuItemsController = {
             )
 
             //Save to db
-           await db('menuItems').insert({
+            await db('menuItems').insert({
                 menuId, name, price, shortDescription, image: imgName, description,
-               choiceOf, slug, createdAt: moment().format("YYYY-MM-DD HH:mm:ss")
+                choiceOf, slug, createdAt: moment().format("YYYY-MM-DD HH:mm:ss")
             });
 
             return  res.status(201).end();
@@ -151,8 +151,7 @@ const menuItemsController = {
 
                 //Insert new image
                 let newImage = req.files.newImage;
-                imgName = name.toLowerCase().replaceAll(' ', '')
-                    + moment().format() + newImage.mimetype.replace('image/', '.')
+                imgName = name.toLowerCase().split(' ').join('')+moment().format() + image.mimetype.replace('image/', '.');
 
                 newImage.mv(uploadDir + imgName, (err) => {
                     if (err) return res.status(400).send("Leider war der Upload nicht erfolgreich"); //Sorry, upload was not successful
@@ -168,11 +167,11 @@ const menuItemsController = {
 
             //Edit in db
 
-                await db('menuItems').where('id', id )
-                    .update({
-                        menuId, name, price, shortDescription, image: imgName, description,
-                        choiceOf, slug
-                    });
+            await db('menuItems').where('id', id )
+                .update({
+                    menuId, name, price, shortDescription, image: imgName, description,
+                    choiceOf, slug
+                });
 
 
             return  res.status(200).end();
@@ -222,7 +221,7 @@ const menuItemsController = {
             const menuItem = await db('menuItems')
                 .select('name', 'price', 'shortDescription',
                     'image', 'description', 'choiceOf'
-                    )
+                )
                 .where('id', id)
                 .limit(1);
 

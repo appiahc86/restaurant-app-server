@@ -5,8 +5,8 @@ const AdminUser = async () => {
 
         await db.schema.createTable('adminUsers', table => {
             table.increments('id').primary();
-            table.string('displayName', 10).notNullable();
-            table.string('phone', 15).unique();
+            table.string('name').notNullable();
+            table.string('email').unique();
             table.tinyint('role').defaultTo(2);
             table.mediumint('specialCode').notNullable();
             table.string('password').notNullable(); //will use in JWT compare
@@ -19,8 +19,7 @@ const AdminUser = async () => {
 
         await db('adminUsers').insert(
             {
-                displayName: "Daniel",
-                phone: "550452587",
+                name: "Innocent",
                 role: 1,
                 specialCode: 202020,
                 password: "$2a$10$dPgEuIaehK8e4ze7J.t1u.coxsBnmaVEhZykijojV5DmD8NYLh87q",

@@ -3,52 +3,27 @@ const bcrypt = require("bcryptjs");
 const config = require("../../../../config/config");
 const jwt = require("jsonwebtoken");
 const { generateRandomNumber } = require("../../../../functions");
-const logger = require("../../../../winston");
+const axios = require("axios");
+const  logger = require("../../../../winston");
+const moment = require("moment");
+const CryptoJS = require("crypto-js");
+const { passwordResetMail } = require("../../../../functions/sendMail")
 
 
 const userAuthController = {
 
-
     //..............Register a new user........................
     create: async (req, res) => {
-        const { phoneNumber, displayName, password } = req.body;
-
-        const regex = /^(?=.{6,})(?=.*[!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?])/
 
         try {
 
-            // validation
-            if (phoneNumber.toString().length  !== 9 )return res.status(400).send("Please check phone number");
-
-            if (!password || !password.match(regex)) return res.status(400).send("Minimum password length should be 6 and contains at least 1 special character");
-
-            if (!displayName || displayName.length < 3)return res.status(400).send("Display name should be at least 3 characters");
-
-            //Hash password
-            let salt = await bcrypt.genSaltSync(10);
-            let hash = await bcrypt.hashSync(password, salt);
-            if (!hash) {
-                logger.info("password hash was not successful");
-                return res.status(400).send("Sorry something went wrong");
-            }
-            const specialCode = generateRandomNumber();
-
-            //Save to db
-            await db("adminUsers").insert({
-                phone: phoneNumber,
-                password: hash,
-                specialCode,
-                displayName,
-                createdAt: new Date()
-            });
-
-            res.status(201).end();
 
 
         }catch (e) {
-            if (e.code === 'ER_DUP_ENTRY') return res.status(400).send('Sorry, this number already exists');
+            if (e.code === 'ER_DUP_ENTRY') return res.status(400).send('Entschuldigung, dieser Benutzer existiert bereits');
+            logger.error('admin, userAuthController create');
             logger.error(e);
-            return res.status(400).send("Sorry your request was not successful");
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
 
         } // ./Catch block
 
@@ -58,30 +33,37 @@ const userAuthController = {
 
     //......................Login...........................
     login: async (req, res) => {
-        const { phoneNumber, password } = req.body;
+        const {email, password} = req.body;
 
 
         try {
-            //Validation
-            if (phoneNumber.toString().length  < 9) return res.status(400).send("Please check phone number");
-            if (!password.trim()) return res.status(400).send("Please provide a password");
 
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            //Validation
+            if (!email.trim()) return res.status(400).send("Bitte E-Mail-Adresse angeben");
+            if (!email.match(emailRegex)) return res.status(400).send("Bitte geben Sie eine gültige E-Mail-Adresse ein");
 
             //find user in db
-            const user = await db("adminUsers").where("phone", phoneNumber);
+            const user = await db("adminUsers")
+                .select('id', 'name', 'email','password',
+                    'role', 'specialCode', 'isActive')
+                .where("email", email.toLowerCase())
+                .limit(1);
+
+
 
             //If user does not exist
-            if (!user.length) return res.status(400).send("Sorry, this user does not exist")
+            if (!user.length) return res.status(400).send("Leider existiert dieser Benutzer nicht")
 
             //Compare passwords
             const isMatched = await bcrypt.compareSync(password, user[0].password);
 
             //If passwords do not match
-            if (!isMatched) return res.status(400).send("Sorry, you entered a wrong password.")
+            if (!isMatched) return res.status(400).send("Entschuldigung, Sie haben ein falsches Passwort eingegeben")
 
 
             //if user is not mark as active (account suspended)
-            if (!user[0].isActive) return res.status(400).send("Sorry, this account is suspended. Please contact client");
+            if (!!user[0].isActive === false) return res.status(400).send("Leider ist dieses Konto gesperrt. Bitte wenden Sie sich an den Administrator");
 
             //Generate JWT token
             const token = jwt.sign({ id: user[0].id, specialCode: user[0].specialCode }, config.JWT_SECRET);
@@ -89,59 +71,101 @@ const userAuthController = {
             res.status(200).send({
                 token,
                 user: {
-                    displayName: user[0].displayName, phone: user[0].phone,
+                    name: user[0].name,
+                    email: user[0].email,
+                    role: user[0].role,
                 }
             })
 
         }catch (e) {
+            logger.error('admin, userAuthController login');
             logger.error(e);
-            return res.status(400).send("Sorry your request was not successful");
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
         } // ./Catch block
     }, // ./Login
 
 
 
-    //............. Change Password...........................
-    changePassword: async (req, res) => {
-        const { currentPassword, password } = req.body;
-
+    //...............Request password reset code....................
+    requestPasswordResetCode: async (req, res) => {
+        const { email } = req.body;
         try {
-            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%\^&\*])(?!.*\s).{8,}$/
+
+
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 
             //Validation
-            if (!password.match(regex)) return res.status(400).send("Password does not meet requirements");
+            if (!email.trim()) return res.status(400).send("Bitte E-Mail-Adresse angeben");
+            if (!email.match(emailRegex)) return res.status(400).send("Bitte geben Sie eine gültige E-Mail-Adresse ein");
 
-            //Query for user in db
-            const query = await db('adminUsers').where('id', req.user.id);
+            const user = await db('users').where({email: email.toLowerCase()}).limit(1);
+            if (!user.length) return res.status(400).send("Leider existiert dieser Benutzer nicht");
 
-            //If user not found
-            if (!query.length) return res.status(400).send("Sorry, this user was not found");
 
-            //Compare passwords
-            const isMatched = await bcrypt.compareSync(currentPassword, query[0].password);
+            const code = generateRandomNumber();
 
-            //If passwords do not match
-            if (!isMatched) return res.status(400).send("Sorry, current password is incorrect.")
+            //update password reset code in db
+            await db('adminUsers').where({email: email.toLowerCase()})
+                .update({passwordResetCode: code})
 
-            //Hash Password
-            let salt = await bcrypt.genSaltSync(10);
-            let hash = await bcrypt.hashSync(password, salt);
+
+            //...........................Send reset email code to user .....................
+            const emailSent = await passwordResetMail(email.toLowerCase(), code);
+            if (!emailSent) return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
+
+            return res.status(200).end();
+
+        }catch (e) {
+            logger.error('admin, userAuthController requestPasswordResetCode');
+            logger.error(e);
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
+        }
+    },
+
+
+
+    //............. Reset Password...........................
+    resetPassword: async (req, res) => {
+        const { email, passwordResetCode, password } = req.body;
+        try {
+
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
+            //Validation
+            if (!email.trim()) return res.status(400).send("Bitte E-Mail-Adresse angeben");
+            if (!email.match(emailRegex)) return res.status(400).send("Bitte geben Sie eine gültige E-Mail-Adresse ein");
+            if (!password.match(passRegex)) return res.status(400).send("Passwort entspricht nicht der Anforderungen");
+            if (!passwordResetCode) res.status(400).send("Bitte geben Sie den Reset-Code an");
+
+            const query = await db("users").where({email: email.toLowerCase()}).limit(1);
+            if (!query.length) res.status(400).send("Leider existiert dieser Benutzer nicht");
+
+            //If user enters wrong password reset code
+            if (query[0].passwordResetCode.toString() !== passwordResetCode.toString()) return res.status(400).send("Entschuldigung, Sie haben einen falschen Code eingegeben.");
+
+
+            //Hash password
+            var salt = await bcrypt.genSaltSync(10);
+            var hash = await bcrypt.hashSync(password, salt);
             if (!hash) {
                 logger.info("password hash was not successful");
-                return res.status(400).send("Sorry something went wrong");
+                return res.status(400).send("Tut mir leid, dass etwas schief gelaufen ist. Bitte versuchen Sie es später noch einmal");
             }
 
             const specialCode = generateRandomNumber();
 
             //Update password in db
-            await db('adminUsers').where({id: query[0].id})
-                .update({password: hash, specialCode: specialCode });
+            await db('users').where({email: email.toLowerCase()})
+                .update({password: hash, specialCode: specialCode, passwordResetCode: ''});
+
 
             res.status(200).end();
 
         }catch (e) {
+            logger.error('admin, userAuthController resetPassword');
             logger.error(e);
-            return res.status(400).send("Sorry your request was not successful");
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
         }
     }
 

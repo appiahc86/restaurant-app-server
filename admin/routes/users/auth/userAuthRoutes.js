@@ -5,12 +5,15 @@ const userAuthController = require("../../../controllers/users/auth/userAuthCont
 const auth = require("../../../middleware/auth");
 
 //Register new user
-// router.post("/register", userAuthController.create);
+router.post("/register", userAuthController.create);
 
 //Login
 router.post('/login', userAuthController.login);
 
-//Change password
-router.post('/change-password', auth, userAuthController.changePassword);
+//Request password reset code
+router.post('/password-reset-code', userAuthController.requestPasswordResetCode);
+
+//Reset password
+router.post('/reset-password', userAuthController.resetPassword);
 
 module.exports = router;

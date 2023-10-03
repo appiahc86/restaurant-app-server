@@ -94,15 +94,16 @@ app.use("/orders", ordersRouter);
 
 
 //Load Admin routes
-const adminIndexRouter = require("./admin/routes/indexRouter")
+const adminUserAuthRouter = require("./admin/routes/users/auth/userAuthRoutes")
+const adminIndexRouter = require("./admin/routes/indexRouter");
 const adminMenuRouter = require('./admin/routes/menu/menuRouter');
 const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
-const adminOrdersRouter = require("./admin/routes/orders/ordersRouter")
-const {log} = require("winston");
+const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
 
 
 //Use Admin routes
 app.use("/admin", adminIndexRouter);
+app.use("/admin/users/auth", adminUserAuthRouter);
 app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
 app.use("/admin/orders", adminOrdersRouter);
