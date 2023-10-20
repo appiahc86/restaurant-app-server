@@ -128,6 +128,8 @@ const userAuthController = {
     //............. Reset Password...........................
     resetPassword: async (req, res) => {
         const { email, passwordResetCode, password } = req.body;
+
+
         try {
 
             const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -138,7 +140,7 @@ const userAuthController = {
             if (!password.match(passRegex)) return res.status(400).send("Passwort entspricht nicht der Anforderungen");
             if (!passwordResetCode) res.status(400).send("Bitte geben Sie den Reset-Code an");
 
-            const query = await db("users").where({email: email.toLowerCase()}).limit(1);
+            const query = await db("adminUsers").where({email: email.toLowerCase()}).limit(1);
             if (!query.length) res.status(400).send("Leider existiert dieser Benutzer nicht");
 
             //If user enters wrong password reset code
@@ -156,9 +158,8 @@ const userAuthController = {
             const specialCode = generateRandomNumber();
 
             //Update password in db
-            await db('users').where({email: email.toLowerCase()})
+            await db('adminUsers').where({email: email.toLowerCase()})
                 .update({password: hash, specialCode: specialCode, passwordResetCode: ''});
-
 
             res.status(200).end();
 

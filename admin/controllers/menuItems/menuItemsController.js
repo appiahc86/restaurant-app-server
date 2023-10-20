@@ -62,7 +62,7 @@ const menuItemsController = {
     create: async (req, res) => {
 
         try{
-            const {name, price, choiceOf,
+            const { name, price, choiceOf,
                 shortDescription, description, menuId
             } = req.body;
 
@@ -70,13 +70,23 @@ const menuItemsController = {
             let image = null;
             let imgName = "";
 
+            let fileError = "";
+
             if (req.files) {
 
                 image = req.files.image;
-                imgName = name.toLowerCase().split(' ').join('')+moment().format() + image.mimetype.replace('image/', '.');
+                imgName = name.toLowerCase().split(' ').join('') + moment().format() + image.mimetype.replace('image/', '.');
                 image.mv(uploadDir + imgName, (err) => {
-                    if (err) return res.status(400).send("Leider war der Upload nicht erfolgreich"); //Sorry, upload was not successful
+                    if (err) {
+                        fileError = err
+                        console.log(err)
+                    } //Sorry, upload was not successful
                 });
+            }
+
+            if (fileError) {
+                logger.info(fileError)
+                return res.status(400).send("Leider war der Upload nicht erfolgreich")
             }
 
             //Validate here
@@ -91,7 +101,7 @@ const menuItemsController = {
                 choiceOf, slug, createdAt: moment().format("YYYY-MM-DD HH:mm:ss")
             });
 
-            return  res.status(201).end();
+            return res.status(201).end();
 
 
         }catch (e) {
@@ -151,7 +161,7 @@ const menuItemsController = {
 
                 //Insert new image
                 let newImage = req.files.newImage;
-                imgName = name.toLowerCase().split(' ').join('')+moment().format() + image.mimetype.replace('image/', '.');
+                imgName = name.toLowerCase().split(' ').join('')+moment().format() + newImage.mimetype.replace('image/', '.');
 
                 newImage.mv(uploadDir + imgName, (err) => {
                     if (err) return res.status(400).send("Leider war der Upload nicht erfolgreich"); //Sorry, upload was not successful
@@ -238,7 +248,6 @@ const menuItemsController = {
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
         }
     } // ./view details
-
 
 }
 

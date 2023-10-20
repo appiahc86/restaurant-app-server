@@ -40,7 +40,7 @@ const menuItemsController = {
                         'menuItems.description','menuItems.choiceOf',
                         'menu.id as menuId','menu.name as menu'
                     )
-                    .where('menu.name', req.query.searchTerm)
+                    .where('menu.id', req.query.searchTerm)
                     .limit(pageSize)
                     .offset((page - 1) * pageSize);
 

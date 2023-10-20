@@ -8,16 +8,12 @@ const userIndexController = {
     
         try {
 
-            const { name, phone, deliveryAddress } = req.body;
-
-            console.log(req.body)
-            console.log(req.user)
+            const { name, deliveryAddress } = req.body;
 
             await db("users").where("id", req.user.id)
                 .update({
                     name,
-                    phone,
-                    deliveryAddress
+                    deliveryAddress: JSON.stringify(deliveryAddress)
                 })
             return res.status(200).end();
 

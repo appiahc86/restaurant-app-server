@@ -20,9 +20,10 @@ const AdminUser = async () => {
         await db('adminUsers').insert(
             {
                 name: "Innocent",
+                email: "wsappiah@gmail.com",
                 role: 1,
                 specialCode: 202020,
-                password: "$2a$10$dPgEuIaehK8e4ze7J.t1u.coxsBnmaVEhZykijojV5DmD8NYLh87q",
+                password: "$2a$10$Cr3fGxuNcFc0AhTuVvjDDOChtK77DBjH7wKtUhV5R5zgVRM.GqKK6",
                 isActive: true,
                 createdAt: new Date()
             }

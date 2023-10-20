@@ -7,11 +7,10 @@ const User = async () => {
             table.bigIncrements('id').primary();
             table.string('name');
             table.string('email').unique();
-            table.integer('phone', 20);
             table.string('password').notNullable();
             table.string('passwordResetCode', 10);
             table.mediumint('specialCode').notNullable(); //will use in JWT compare
-            table.jsonb('deliveryAddress');
+            table.jsonb('deliveryAddress').defaultTo('{}');
             table.boolean('isActive').defaultTo(true);
             table.timestamp('createdAt').defaultTo(db.fn.now());
             table.engine('InnoDB');

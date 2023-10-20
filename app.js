@@ -10,7 +10,6 @@ const db = require("./config/db");
 const uploader = require("express-fileupload");
 const logger = require("./winston");
 const transactionJob = require("./cron");
-const axios = require("axios");
 
 app.use(express.json());
 app.use(cors());
@@ -112,7 +111,7 @@ app.use(express.static('public'));
 
 //404 handler
 app.use((req, res, next) => {
-    res.status(400).send('404');
+    return res.status(400).send('404');
 })
 
 
@@ -120,7 +119,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
 
     logger.error(err.message, err);
-    res.status(400).send('Sorry, Entschuldigung, etwas ist schief gelaufen');
+    return res.status(400).send('Sorry, Entschuldigung, etwas ist schief gelaufen');
 
 });
 

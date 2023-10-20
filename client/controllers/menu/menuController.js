@@ -6,7 +6,7 @@ const menuController = {
     //Get all menu
     index: async (req, res) => {
         try{
-            const menu = await db.select( 'name', 'slug').from('menu');
+            const menu = await db.select( 'id','name', 'slug').from('menu');
             return res.status(200).send({menu});
 
         }catch (e) {

@@ -14,24 +14,24 @@ const auth = async (req, res, next) => {
         const decoded = jwt.verify(token, config.JWT_SECRET);
         const user = await db("adminUsers")
             .where({id: decoded.id})
-            .select("id", "displayName", "role", "isActive","specialCode")
+            .select("id", "role", "isActive","specialCode")
             .limit(1);
 
         //If user not found
-        if (!user.length)  return res.status(401).send("Please login");
+        if (!user.length)  return res.status(401).send("Bitte loggen Sie sich ein");
 
 
         //if special code does not match
         if ( parseInt(user[0].specialCode ) !== parseInt(decoded.specialCode))
-            return res.status(401).send("Please login");
+            return res.status(401).send("Bitte loggen Sie sich ein");
 
         req.token = token;
         req.user = user[0];
         next();
     }catch (e) {
-        if(e.message === "invalid token") return res.status(401).send("Please login");
+        if(e.message === "invalid token") return res.status(401).send("Bitte loggen Sie sich ein");
         logger.error(e)
-        res.status(401).send("Please login");
+        res.status(401).send("Bitte loggen Sie sich ein");
     }
 }
 

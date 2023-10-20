@@ -78,7 +78,7 @@ const userAuthController = {
             //find user in db
             const user = await db("users")
                 .select('id', 'name', 'email','password',
-                     'deliveryAddress', 'phone', 'specialCode', 'isActive')
+                     'deliveryAddress', 'specialCode', 'isActive')
                 .where("email", email.toLowerCase())
                 .limit(1);
 
@@ -105,8 +105,7 @@ const userAuthController = {
                 user: {
                     name: user[0].name,
                     email: user[0].email,
-                    phone: user[0].phone,
-                    deliveryAddress: user[0].deliveryAddress,
+                    deliveryAddress: JSON.parse(user[0].deliveryAddress)
                 }
             })
 
