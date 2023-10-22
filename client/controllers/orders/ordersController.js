@@ -109,6 +109,10 @@ const ordersController = {
                     "orderDetails.menuItemName", "orderDetails.choiceOf")
                 .where('orders.id', orderId)
 
+            if (order.length){
+                order[0].deliveryAddress = JSON.parse(order[0].deliveryAddress)
+            }
+
 
             return res.status(200).send({order});
 

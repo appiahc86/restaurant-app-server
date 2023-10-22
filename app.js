@@ -11,6 +11,11 @@ const uploader = require("express-fileupload");
 const logger = require("./winston");
 const transactionJob = require("./cron");
 
+
+
+//Set TimeZone
+process.env.TZ = 'Europe/Berlin';
+
 app.use(express.json());
 app.use(cors());
 
@@ -26,9 +31,6 @@ app.use(
 
 //Run cron jobs
 transactionJob.start();
-
-//Set TimeZone
-process.env.TZ = 'Europe/Berlin';
 
 
     //Create database tables
@@ -95,6 +97,7 @@ app.use("/orders", ordersRouter);
 //Load Admin routes
 const adminUserAuthRouter = require("./admin/routes/users/auth/userAuthRoutes")
 const adminIndexRouter = require("./admin/routes/indexRouter");
+const adminDashboardRouter = require("./admin/routes/dashboardRouter");
 const adminMenuRouter = require('./admin/routes/menu/menuRouter');
 const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
 const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
@@ -102,6 +105,7 @@ const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
 
 //Use Admin routes
 app.use("/admin", adminIndexRouter);
+app.use("/admin/dashboard", adminDashboardRouter);
 app.use("/admin/users/auth", adminUserAuthRouter);
 app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
@@ -125,6 +129,7 @@ app.use((err, req, res, next) => {
 
 
 if (process.env.NODE_ENV !== 'production'){
+
     server.listen(port, async () => {
         logger.info(`server running on port ${port}`);
     })

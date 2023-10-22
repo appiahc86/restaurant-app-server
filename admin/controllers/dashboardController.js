@@ -5,23 +5,57 @@ const moment = require("moment");
 const dashboardController = {
     index: async (req, res) => {
         try{
-
-            const startOfYear = `${moment().year()}-01-01`;
             const today = moment().format("YYYY-MM-DD");
-            console.log(today)
+
+            await db.transaction( async trx => {
 
 
+                //Get number of users
+                const users = await trx("users")
+                    .count("id as total");
+
+                //Get total menu Items
+                const menuItems = await trx("menuItems")
+                    .count("id as total");
 
 
-            return res.status(200).send({
-                boom: ""
+                //Get today's orders
+                const orders = await trx("orders")
+                    .where("orderDate", ">=", today)
+                    .where("deliveryStatus","delivered")
+                    .sum("total as totalOrders");
+
+                //Barchart Records
+                let barChartRecords = await trx('orderDetails')
+                    .innerJoin('menu', 'orderDetails.menuId', 'menu.id')
+                    .innerJoin('orders', 'orders.id', 'orderDetails.orderId')
+                    .select('menu.name')
+                    .sum('orderDetails.qty as sum')
+                    .whereRaw('orders.orderDate >= ?', [today])
+                    .whereRaw('orders.deliveryStatus = ?', ["delivered"])
+                    .groupBy('menu.id')
+                    .orderBy('sum', 'desc')
+                    .limit(10);
+
+                barChartRecords =  barChartRecords.filter(item => item.sum > 0)
+
+
+                return res.status(200).send({
+                    users: users[0].total,
+                    totalMenuItems: menuItems[0].total || 0,
+                    todayOrders: orders[0].totalOrders || 0,
+                    barChartRecords
+                });
+
             })
+
+
         }catch (e) {
             logger.error('admin, controllers dashboardController index');
             logger.error(e);
-            return res.status(400).send("Sorry your request was not successful");
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
         }
-    }
+    },
 }
 
 
