@@ -5,13 +5,14 @@ const MenuItem = require("./MenuItem");
 const Order = require("./Order");
 const OrderDetails = require("./OrderDetail");
 const Payment = require("./Payment");
+const Setting = require("./Setting");
 
 
 
 
 const migrations =  [
     User, AdminUser, Menu, MenuItem,
-    Order, OrderDetails, Payment
+    Order, OrderDetails, Payment, Setting
 ]
 
   const runMigrations = async () => {
@@ -20,7 +21,8 @@ const migrations =  [
         await migration();
     }
 
-      console.log('Database Connected')
+      if (process.env.NODE_ENV !== 'production') console.log('Database Connected');
+
   }
 
  module.exports = runMigrations;

@@ -7,7 +7,8 @@ const db = require('knex')({
         port : 3306,
         user : config.DB_USER,
         password : config.DB_PASS,
-        database : config.DB_NAME
+        database : config.DB_NAME,
+        timezone: 'Europe/Berlin'
     },
     pool: { min: 5, max: 30 }
 });

@@ -9,9 +9,9 @@ const ordersController = {
     index: async (req, res) => {
         try{
 
-
             const page = req.query.page || 1;
             const pageSize = req.query.pageSize || 10;
+            
 
             const orderDate = moment().format("YYYY-MM-DD");
 

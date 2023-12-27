@@ -10,7 +10,7 @@ const db = require("./config/db");
 const uploader = require("express-fileupload");
 const logger = require("./winston");
 const transactionJob = require("./cron");
-
+const stripe = require('stripe')('sk_test_VLUqCcsYkY068mQ785bVKH5k00LW1ZVZ9X');
 
 
 //Set TimeZone
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cors());
 
 
-// express-fileupload middleware
+// express-file upload middleware
 app.use(
     uploader({
         useTempFiles: true,
@@ -101,6 +101,7 @@ const adminDashboardRouter = require("./admin/routes/dashboardRouter");
 const adminMenuRouter = require('./admin/routes/menu/menuRouter');
 const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
 const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
+const settingsRouter = require("./admin/routes/settings/settingsRouter")
 
 
 //Use Admin routes
@@ -110,6 +111,28 @@ app.use("/admin/users/auth", adminUserAuthRouter);
 app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
 app.use("/admin/orders", adminOrdersRouter);
+app.use("/admin/settings", settingsRouter);
+
+
+app.get('/payment-intent', async (req, res) => {
+    try {
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: 5099,
+            currency: 'eur',
+            payment_method_types: ['card'],
+        });
+
+        res.status(200).send({
+            clientSecrete:paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id
+        })
+    }catch (e) {
+        console.log(e.message)
+    }
+
+})
+
 
 app.use(express.static('public'));
 
@@ -133,4 +156,6 @@ if (process.env.NODE_ENV !== 'production'){
     server.listen(port, async () => {
         logger.info(`server running on port ${port}`);
     })
+
+
 }else server.listen();

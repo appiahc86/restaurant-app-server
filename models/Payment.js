@@ -6,9 +6,11 @@ const Payment = async () => {
         await db.schema.createTable('payments', table => {
             table.bigIncrements('id').primary();
             table.string('reference').unique();
+            table.string('extReference').unique();
+            table.jsonb('details').defaultTo('{}');
             table.bigInteger('orderId').unsigned().notNullable();
             table.datetime('paymentDate').index();
-            table.string('paymentMethod');
+            table.string('paymentMethod').index();
             table.decimal('amount');
             table.enum('status', ['successful', 'pending', 'failed', 'refund']).defaultTo('pending').index();
             table.engine('InnoDB');

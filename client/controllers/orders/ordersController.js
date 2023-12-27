@@ -2,6 +2,8 @@ const db = require("../../../config/db");
 const logger = require("../../../winston");
 const moment = require("moment");
 const {generateReferenceNumber} = require("../../../functions");
+const { createOrder, captureOrder } = require("../../../functions/payPalFunction");
+const stripe = require('stripe')('sk_test_VLUqCcsYkY068mQ785bVKH5k00LW1ZVZ9X');
 
 
 const ordersController = {
@@ -30,68 +32,149 @@ const ordersController = {
     //Save order
     create: async (req, res) => {
         try{
-            const {cart, deliveryAddress, deliveryFee, paymentMethod, note} = req.body;
 
-            let total = parseFloat(deliveryFee);
-            for (const cartElement of cart) {
-                total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
+            //Check if orders are allowed
+            const settingsQuery = await db("settings")
+                .where("id", 1)
+                .select("appConfig");
+
+            const result = JSON.parse(settingsQuery[0].appConfig);
+            if (!result.allowOrders) return res.status(400)
+                .json("Bestellungen sind derzeit leider nicht möglich. Bitte versuchen Sie es später noch einmal.");
+
+
+            const {cart, deliveryAddress, deliveryFee, paymentMethod, note} = req.body;
+            const orderDate = moment().format("YYYY-MM-DD HH:mm:ss");
+
+            const payload = { deliveryFee, cart }
+
+
+            // ******************** If payPal payment **************
+            if (paymentMethod === "paypal"){
+                const { jsonResponse, httpStatusCode } = await createOrder(payload);
+                return res.status(httpStatusCode).json(jsonResponse);
             }
 
 
-            const orderDate = moment().format("YYYY-MM-DD HH:mm:ss");
+            // ************** If Cash Payment **********************
+            if (paymentMethod === "cash"){
 
-            await db.transaction(async trx => {
-
-
-                //save to orders Table
-                const order = await trx('orders').insert({
-                    userId: req.user.id,
-                    orderDate,
-                    total,
-                    deliveryAddress,
-                    deliveryFee,
-                    numberOfItems: cart.length,
-                    note
-                })
-
-                const orderDetailsArray = [];
-                for (const crt of cart) {
-                    orderDetailsArray.push({
-                        orderId: order[0],
-                        menuItemId: crt.id,
-                        menuItemName: crt.name,
-                        menuId: crt.menuId,
-                        menuName: crt.menu,
-                        qty: crt.qty,
-                        price: crt.price,
-                        choiceOf: crt.selectedChoice
-                    })
+                //Calculate cart total
+                let total = parseFloat(deliveryFee);
+                for (const cartElement of cart) {
+                    total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
                 }
 
-                //Save to orderDetails table
-                await trx.batchInsert('orderDetails', orderDetailsArray, 30)
+                await db.transaction(async trx => {
+
+                    const order = await trx('orders').insert({
+                        userId: req.user.id,
+                        orderDate,
+                        total,
+                        deliveryAddress,
+                        deliveryFee,
+                        numberOfItems: cart.length,
+                        note
+                    })
+
+                    const orderDetailsArray = [];
+                    for (const crt of cart) {
+                        orderDetailsArray.push({
+                            orderId: order[0],
+                            menuItemId: crt.id,
+                            menuItemName: crt.name,
+                            menuId: crt.menuId,
+                            menuName: crt.menu,
+                            qty: crt.qty,
+                            price: crt.price,
+                            choiceOf: crt.selectedChoice
+                        })
+                    }
+
+                    //Save to orderDetails table
+                    await trx.batchInsert('orderDetails', orderDetailsArray, 30)
 
 
-                //Insert into payments table
-                const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
-                await trx('payments').insert({
-                    reference: referenceNumber,
-                    orderId: order[0],
-                    paymentDate: orderDate,
-                    paymentMethod,
-                    amount: total,
-                    status: 'successful'
-                })
+                    //Insert into payments table
+                    const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
+                    await trx('payments').insert({
+                        reference: referenceNumber,
+                        orderId: order[0],
+                        paymentDate: orderDate,
+                        paymentMethod: 'cash',
+                        amount: total,
+                        status: "successful"
+                    })
 
 
-            })// ./Transaction
+                })// ./Transaction
 
-            return res.status(201).end();
+                return res.status(201).end();
+            }
+
+
+            // ************************ if Credit Card Payment ************************************
+            if (paymentMethod === "cc"){
+
+                //Calculate cart total
+                let total = parseFloat(deliveryFee);
+                for (const cartElement of cart) {
+                    total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
+                }
+
+                await db.transaction(async trx => {
+
+                    const order = await trx('orders').insert({
+                        userId: req.user.id,
+                        orderDate,
+                        total,
+                        deliveryAddress,
+                        deliveryFee,
+                        numberOfItems: cart.length,
+                        note
+                    })
+
+                    const orderDetailsArray = [];
+                    for (const crt of cart) {
+                        orderDetailsArray.push({
+                            orderId: order[0],
+                            menuItemId: crt.id,
+                            menuItemName: crt.name,
+                            menuId: crt.menuId,
+                            menuName: crt.menu,
+                            qty: crt.qty,
+                            price: crt.price,
+                            choiceOf: crt.selectedChoice
+                        })
+                    }
+
+                    //Save to orderDetails table
+                    await trx.batchInsert('orderDetails', orderDetailsArray, 30)
+
+
+                    //Insert into payments table
+                    const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
+                    await trx('payments').insert({
+                        reference: referenceNumber,
+                        extReference: req.body.extReference,
+                        orderId: order[0],
+                        paymentDate: orderDate,
+                        paymentMethod: 'cc',
+                        amount: total,
+                    })
+
+
+                })// ./Transaction
+
+
+                return res.status(201).end();
+            }
+
 
         }catch (e) {
             logger.error('client, controllers ordersController create');
             logger.error(e);
-            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
+            return res.status(400).json("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
         }
     }, // .saveOrder
 
@@ -113,7 +196,6 @@ const ordersController = {
                 order[0].deliveryAddress = JSON.parse(order[0].deliveryAddress)
             }
 
-
             return res.status(200).send({order});
 
         }catch (e) {
@@ -121,7 +203,112 @@ const ordersController = {
             logger.error(e);
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
         }
+    },
+
+
+    //Capture
+    capture: async (req, res) => {
+        try {
+
+            const { orderID } = req.params;
+
+            const {cart, deliveryAddress, deliveryFee, note} = req.body;
+            const orderDate = moment().format("YYYY-MM-DD HH:mm:ss");
+
+            //Calculate cart total
+            let total = parseFloat(deliveryFee);
+            for (const cartElement of cart) {
+                total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
+            }
+
+            const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
+
+            // save order to database
+            if (httpStatusCode === 201 || httpStatusCode === 200) {
+                await db.transaction(async trx => {
+
+                    const order = await trx('orders').insert({
+                        userId: req.user.id,
+                        orderDate,
+                        total,
+                        deliveryAddress,
+                        deliveryFee,
+                        numberOfItems: cart.length,
+                        note
+                    })
+
+                    const orderDetailsArray = [];
+                    for (const crt of cart) {
+                        orderDetailsArray.push({
+                            orderId: order[0],
+                            menuItemId: crt.id,
+                            menuItemName: crt.name,
+                            menuId: crt.menuId,
+                            menuName: crt.menu,
+                            qty: crt.qty,
+                            price: crt.price,
+                            choiceOf: crt.selectedChoice
+                        })
+                    }
+
+                    //Save to orderDetails table
+                    await trx.batchInsert('orderDetails', orderDetailsArray, 30)
+
+
+                    //Insert into payments table
+                    const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
+                    await trx('payments').insert({
+                        reference: referenceNumber,
+                        extReference: orderID,
+                        orderId: order[0],
+                        paymentDate: orderDate,
+                        paymentMethod: 'paypal',
+                        amount: total
+                    })
+
+
+                })// ./Transaction
+            }
+
+
+            //If Payment is successful
+            if (jsonResponse.status === "COMPLETED"){
+                await db("payments")
+                    .where("extReference", orderID)
+                    .andWhere("paymentMethod", "paypal")
+                    .update({status: "successful"})
+            }
+
+
+
+            res.status(httpStatusCode).json(jsonResponse);
+        } catch (e) {
+            logger.error('client, controllers ordersController capture');
+            logger.error(e);
+            return res.status(400).json({error: "Leider war Ihre Anfrage nicht erfolgreich"});
+
+        }
+    },
+
+    //Delete order
+    destroy: async (req, res) => {
+        try{
+
+            const payment = await db("payments").where('extReference', req.body.extReference)
+                .andWhere('paymentMethod', 'cc').select('orderId').limit(1);
+
+            await db("orders").where('id', payment[0].orderId).del();
+
+            return res.status(200).end();
+
+        }catch (e) {
+            logger.error('client, controllers ordersController Destroy');
+            logger.error(e);
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
+        }
     }
+
+
 }
 
 
