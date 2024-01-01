@@ -1,5 +1,11 @@
 const moment = require("moment");
 
+//Format number
+const formatNumber = (num) => {
+    return parseFloat(num).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+        .replace('.', ',');
+}
+
 //Generate random 6 digits
 const generateRandomNumber = () => {
     return Math.floor(100000 + Math.random() * 900000);
@@ -24,5 +30,5 @@ const generateReferenceNumber = (date) => {
 }
 
 module.exports = {
-    generateRandomNumber, generateReferenceNumber
+    generateRandomNumber, generateReferenceNumber, formatNumber
 }

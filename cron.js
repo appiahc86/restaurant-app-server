@@ -40,7 +40,7 @@ try {
 
 
 
-const transactionJob = new cron.CronJob('*/5 * * * *', async () => { // This function will be executed every 3 minutes
+const transactionJob = new cron.CronJob('*/1 * * * *', async () => { // This function will be executed every 3 minutes
     try {
 
         const pendingTransactions = await db("payments")

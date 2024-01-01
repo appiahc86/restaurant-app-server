@@ -1,11 +1,7 @@
 
 const fetch =  require("node-fetch");
-const db = require("../config/db");
-const { generateReferenceNumber } = require("./index");
-const moment = require("moment/moment");
 const config = require("../config/config");
 const logger = require("../winston");
-
 const PAYPAL_CLIENT_ID = config.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = config.PAYPAL_CLIENT_SECRET;
 const base = config.PAYPAL_BASE;
@@ -43,13 +39,7 @@ const generateAccessToken = async () => {
  * Create an order to start the transaction.
  * @see https://developer.paypal.com/docs/api/orders/v2/#orders_create
  */
-const createOrder = async ({deliveryFee, cart}) => {
-
-    //Calculate cart total
-    let total = parseFloat(deliveryFee);
-    for (const cartElement of cart) {
-        total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
-    }
+const createOrder = async (total) => {
 
     const accessToken = await generateAccessToken();
 
@@ -81,57 +71,7 @@ const createOrder = async ({deliveryFee, cart}) => {
     });
 
 
-    const ress = await handleResponse(response);
-
-
-    // save order to database
-    // if (res.httpStatusCode === 201){
-    //     await db.transaction(async trx => {
-    //
-    //         const order = await trx('orders').insert({
-    //             userId,
-    //             orderDate,
-    //             total,
-    //             deliveryAddress,
-    //             deliveryFee,
-    //             numberOfItems: cart.length,
-    //             note
-    //         })
-    //
-    //         const orderDetailsArray = [];
-    //         for (const crt of cart) {
-    //             orderDetailsArray.push({
-    //                 orderId: order[0],
-    //                 menuItemId: crt.id,
-    //                 menuItemName: crt.name,
-    //                 menuId: crt.menuId,
-    //                 menuName: crt.menu,
-    //                 qty: crt.qty,
-    //                 price: crt.price,
-    //                 choiceOf: crt.selectedChoice
-    //             })
-    //         }
-    //
-    //         //Save to orderDetails table
-    //         await trx.batchInsert('orderDetails', orderDetailsArray, 30)
-    //
-    //
-    //         //Insert into payments table
-    //         const referenceNumber = generateReferenceNumber(moment()) + userId;
-    //         await trx('payments').insert({
-    //             reference: referenceNumber,
-    //             extReference: res.jsonResponse.id,
-    //             orderId: order[0],
-    //             paymentDate: orderDate,
-    //             paymentMethod: 'paypal',
-    //             amount: total
-    //         })
-    //
-    //
-    //     })// ./Transaction
-    // }
-
-    return ress;
+    return await handleResponse(response);
 };
 
 /**
@@ -167,32 +107,10 @@ async function handleResponse(response) {
         };
     } catch (err) {
         const errorMessage = await response.text();
+        logger.error(err);
         throw new Error(errorMessage);
     }
 }
-
-// app.post("/api/orders", async (req, res) => {
-//     try {
-//         // use the cart information passed from the front-end to calculate the order amount detals
-//         const { cart } = req.body;
-//         const { jsonResponse, httpStatusCode } = await createOrder(cart);
-//         res.status(httpStatusCode).json(jsonResponse);
-//     } catch (error) {
-//         console.error("Failed to create order:", error);
-//         res.status(500).json({ error: "Failed to create order." });
-//     }
-// });
-//
-// app.post("/api/orders/:orderID/capture", async (req, res) => {
-//     try {
-//         const { orderID } = req.params;
-//         const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
-//         res.status(httpStatusCode).json(jsonResponse);
-//     } catch (error) {
-//         console.error("Failed to create order:", error);
-//         res.status(500).json({ error: "Failed to capture order." });
-//     }
-// });
 
 
 module.exports = {

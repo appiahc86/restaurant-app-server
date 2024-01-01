@@ -6,13 +6,14 @@ const Order = require("./Order");
 const OrderDetails = require("./OrderDetail");
 const Payment = require("./Payment");
 const Setting = require("./Setting");
+const ZipCodes = require("./ZipCodes");
 
 
 
 
 const migrations =  [
     User, AdminUser, Menu, MenuItem,
-    Order, OrderDetails, Payment, Setting
+    Order, OrderDetails, Payment, Setting, ZipCodes
 ]
 
   const runMigrations = async () => {

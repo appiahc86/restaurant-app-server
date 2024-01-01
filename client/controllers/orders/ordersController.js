@@ -3,7 +3,7 @@ const logger = require("../../../winston");
 const moment = require("moment");
 const {generateReferenceNumber} = require("../../../functions");
 const { createOrder, captureOrder } = require("../../../functions/payPalFunction");
-const stripe = require('stripe')('sk_test_VLUqCcsYkY068mQ785bVKH5k00LW1ZVZ9X');
+const { calculateOrder } = require("../../../functions/calculateOrder");
 
 
 const ordersController = {
@@ -43,15 +43,21 @@ const ordersController = {
                 .json("Bestellungen sind derzeit leider nicht möglich. Bitte versuchen Sie es später noch einmal.");
 
 
-            const {cart, deliveryAddress, deliveryFee, paymentMethod, note} = req.body;
+
+            const {cart, deliveryAddress, paymentMethod, note} = req.body;
+
+
+            const processedData = await calculateOrder(cart, deliveryAddress, paymentMethod, note);
+           if (processedData.error){
+               return res.status(400).json(processedData.error);
+           }
+
+
             const orderDate = moment().format("YYYY-MM-DD HH:mm:ss");
-
-            const payload = { deliveryFee, cart }
-
 
             // ******************** If payPal payment **************
             if (paymentMethod === "paypal"){
-                const { jsonResponse, httpStatusCode } = await createOrder(payload);
+                const { jsonResponse, httpStatusCode } = await createOrder(processedData.total);
                 return res.status(httpStatusCode).json(jsonResponse);
             }
 
@@ -59,26 +65,22 @@ const ordersController = {
             // ************** If Cash Payment **********************
             if (paymentMethod === "cash"){
 
-                //Calculate cart total
-                let total = parseFloat(deliveryFee);
-                for (const cartElement of cart) {
-                    total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
-                }
+                let total = processedData.total
 
                 await db.transaction(async trx => {
 
                     const order = await trx('orders').insert({
                         userId: req.user.id,
                         orderDate,
-                        total,
-                        deliveryAddress,
-                        deliveryFee,
-                        numberOfItems: cart.length,
-                        note
+                        total: processedData.total,
+                        deliveryAddress: processedData.deliveryAddress,
+                        deliveryFee: processedData.deliveryFee,
+                        numberOfItems: processedData.cart.length,
+                        note: processedData.note
                     })
 
                     const orderDetailsArray = [];
-                    for (const crt of cart) {
+                    for (const crt of processedData.cart) {
                         orderDetailsArray.push({
                             orderId: order[0],
                             menuItemId: crt.id,
@@ -99,6 +101,7 @@ const ordersController = {
                     const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
                     await trx('payments').insert({
                         reference: referenceNumber,
+                        extReference: referenceNumber,
                         orderId: order[0],
                         paymentDate: orderDate,
                         paymentMethod: 'cash',
@@ -117,10 +120,7 @@ const ordersController = {
             if (paymentMethod === "cc"){
 
                 //Calculate cart total
-                let total = parseFloat(deliveryFee);
-                for (const cartElement of cart) {
-                    total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
-                }
+                let total = processedData.total;
 
                 await db.transaction(async trx => {
 
@@ -128,14 +128,14 @@ const ordersController = {
                         userId: req.user.id,
                         orderDate,
                         total,
-                        deliveryAddress,
-                        deliveryFee,
-                        numberOfItems: cart.length,
-                        note
+                        deliveryAddress: processedData.deliveryAddress,
+                        deliveryFee: processedData.deliveryFee,
+                        numberOfItems: processedData.cart.length,
+                        note: processedData.note
                     })
 
                     const orderDetailsArray = [];
-                    for (const crt of cart) {
+                    for (const crt of processedData.cart) {
                         orderDetailsArray.push({
                             orderId: order[0],
                             menuItemId: crt.id,
@@ -212,14 +212,19 @@ const ordersController = {
 
             const { orderID } = req.params;
 
-            const {cart, deliveryAddress, deliveryFee, note} = req.body;
+            const {cart, deliveryAddress, note} = req.body;
+
+
+            const processedData = await calculateOrder(cart, deliveryAddress, "paypal", note);
+            if (processedData.error){
+                return res.status(400).json(processedData.error);
+            }
+
+
             const orderDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
             //Calculate cart total
-            let total = parseFloat(deliveryFee);
-            for (const cartElement of cart) {
-                total += parseFloat(cartElement.price) * parseInt(cartElement.qty);
-            }
+            let total = processedData.total;
 
             const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
 
@@ -231,14 +236,14 @@ const ordersController = {
                         userId: req.user.id,
                         orderDate,
                         total,
-                        deliveryAddress,
-                        deliveryFee,
-                        numberOfItems: cart.length,
-                        note
+                        deliveryAddress: processedData.deliveryAddress,
+                        deliveryFee: processedData.deliveryFee,
+                        numberOfItems: processedData.cart.length,
+                        note: processedData.note
                     })
 
                     const orderDetailsArray = [];
-                    for (const crt of cart) {
+                    for (const crt of processedData.cart) {
                         orderDetailsArray.push({
                             orderId: order[0],
                             menuItemId: crt.id,

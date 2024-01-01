@@ -10,8 +10,6 @@ const db = require("./config/db");
 const uploader = require("express-fileupload");
 const logger = require("./winston");
 const transactionJob = require("./cron");
-const stripe = require('stripe')('sk_test_VLUqCcsYkY068mQ785bVKH5k00LW1ZVZ9X');
-
 
 //Set TimeZone
 process.env.TZ = 'Europe/Berlin';
@@ -79,6 +77,7 @@ app.use((req, res, next) => {
 
 
 //Load routes
+const indexRouter = require("./client/routes/indexRouter");
 const userIndexRouter = require("./client/routes/users/index");
 const userAuthRouter = require("./client/routes/users/auth/userAuthRoutes");
 const menuRouter = require("./client/routes/menu/menuRouter");
@@ -87,6 +86,7 @@ const ordersRouter = require("./client/routes/orders/ordersRouter");
 
 
 //Use Routes
+app.use("/", indexRouter);
 app.use("/users", userIndexRouter);
 app.use("/users/auth", userAuthRouter);
 app.use("/menu", menuRouter);
@@ -102,6 +102,7 @@ const adminMenuRouter = require('./admin/routes/menu/menuRouter');
 const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
 const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
 const settingsRouter = require("./admin/routes/settings/settingsRouter")
+const zipCodesRouter = require("./admin/routes/zipCodes/zipCodesRouter");
 
 
 //Use Admin routes
@@ -112,26 +113,8 @@ app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
 app.use("/admin/orders", adminOrdersRouter);
 app.use("/admin/settings", settingsRouter);
+app.use("/admin/zipcodes", zipCodesRouter)
 
-
-app.get('/payment-intent', async (req, res) => {
-    try {
-
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: 5099,
-            currency: 'eur',
-            payment_method_types: ['card'],
-        });
-
-        res.status(200).send({
-            clientSecrete:paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
-        })
-    }catch (e) {
-        console.log(e.message)
-    }
-
-})
 
 
 app.use(express.static('public'));

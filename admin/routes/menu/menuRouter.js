@@ -7,13 +7,13 @@ const menuController = require('../../controllers/menu/menuController');
 //Get menuItems
 router.get('/', menuController.index);
 
-//Save Category
+//Save menu
 router.post('/', menuController.create);
 
-//Edit category
+//Edit menu
 router.post('/edit', menuController.edit);
 
-//Delete Category
+//Delete menu
 router.post('/delete', menuController.destroy);
 
 
