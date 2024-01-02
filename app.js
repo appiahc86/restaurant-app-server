@@ -14,6 +14,7 @@ const transactionJob = require("./cron");
 //Set TimeZone
 process.env.TZ = 'Europe/Berlin';
 
+app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cors());
 

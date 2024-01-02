@@ -120,7 +120,7 @@ const transactionJob = new cron.CronJob('*/1 * * * *', async () => { // This fun
                         await db('payments').where('id', pend.id)
                             .update({status: 'failed'})
                     }
-                //     requires_payment_method
+
                     
 
                 }// ./Credit Card payment

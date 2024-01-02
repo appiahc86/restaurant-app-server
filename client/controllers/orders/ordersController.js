@@ -4,6 +4,8 @@ const moment = require("moment");
 const {generateReferenceNumber} = require("../../../functions");
 const { createOrder, captureOrder } = require("../../../functions/payPalFunction");
 const { calculateOrder } = require("../../../functions/calculateOrder");
+const {sendOrderEmail} = require("../../../functions/orderEmail");
+
 
 
 const ordersController = {
@@ -65,7 +67,8 @@ const ordersController = {
             // ************** If Cash Payment **********************
             if (paymentMethod === "cash"){
 
-                let total = processedData.total
+                let total = processedData.total;
+                let orderId;
 
                 await db.transaction(async trx => {
 
@@ -78,6 +81,8 @@ const ordersController = {
                         numberOfItems: processedData.cart.length,
                         note: processedData.note
                     })
+
+                    orderId = order[0];
 
                     const orderDetailsArray = [];
                     for (const crt of processedData.cart) {
@@ -112,7 +117,21 @@ const ordersController = {
 
                 })// ./Transaction
 
-                return res.status(201).end();
+                 res.status(201).end();
+
+                await sendOrderEmail(
+                    req.user.email,
+                    {
+                        cart: processedData.cart,
+                        deliveryFee: processedData.deliveryFee,
+                        deliveryAddress: processedData.deliveryAddress,
+                        total: processedData.total,
+                        orderId,
+                        note: processedData.note
+                    }
+                    );
+
+
             }
 
 
@@ -230,6 +249,7 @@ const ordersController = {
 
             // save order to database
             if (httpStatusCode === 201 || httpStatusCode === 200) {
+
                 await db.transaction(async trx => {
 
                     const order = await trx('orders').insert({
@@ -271,10 +291,8 @@ const ordersController = {
                         amount: total
                     })
 
-
                 })// ./Transaction
             }
-
 
             //If Payment is successful
             if (jsonResponse.status === "COMPLETED"){
@@ -283,8 +301,6 @@ const ordersController = {
                     .andWhere("paymentMethod", "paypal")
                     .update({status: "successful"})
             }
-
-
 
             res.status(httpStatusCode).json(jsonResponse);
         } catch (e) {

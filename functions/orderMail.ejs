@@ -1,0 +1,96 @@
+<%
+ const formatNumber = (num) => {
+    return parseFloat(num).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+            .replace('.', ',');
+}
+ %>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+</head>
+
+<style>
+    .text-center {
+        text-align: center;
+    }
+
+    .fst-italic {
+        font-style: italic;
+    }
+    .mb-2{
+        margin-bottom: 10px;
+    }
+    .fw-bold {
+        font-weight: bold;
+    }
+
+</style>
+
+<body>
+<div class="container">
+
+    <div style="text-align: center;">
+        <div class="">
+            <h2>Bestellung bestätigt</h2>
+            <p class="fw-bold">Deine Bestellung(Auftragsnummer: <%= content?.orderId %>)</p>
+        </div>
+    </div>
+
+
+    <h3 class="mb-2 fw-bold">Deine Bestellung</h3>
+    <div id="loop-container">
+
+        <%content?.cart.forEach(item=>{%>
+        <div class="row">
+            <div>
+                <b ><%= item.qty %>x</b>
+                <span style="margin: 0 10%;"><%= item?.name %></span>
+                <span style="float: right; margin-right: 10px;"><%= formatNumber(item.price * item.qty) %> €</span>
+            </div>
+
+            <% if(item.selectedChoice){%>
+            <div style="margin: 0 10%; color: rgba(8,93,68,0.65)"><%= item.selectedChoice %></div>
+            <%}%>
+
+            <hr>
+        </div>
+            <%})%>
+
+    </div>
+
+        <div>
+            <h3 class="mb-2 fw-bold">Lieferdetails</h3>
+            <address class="fst-italic" style="font-size: 1.2em;">
+                <span><b>Straße: </b></span><%= content?.deliveryAddress?.street %><br>
+                <span><b>Hausnummer: </b></span><%= content?.deliveryAddress?.houseNumber %><br>
+                <span><b>Postleitzahl: </b></span><%= content?.deliveryAddress?.postCode %> <br>
+                <span><b>Stadt: </b></span><%= content?.deliveryAddress?.town %> <br>
+                <span><b>Telefonnummer: </b></span><%= content?.deliveryAddress?.phone %><br>
+                <span><b>Notiz: </b></span><%= content?.note %> <br>
+            </address>
+        </div>
+
+        <br><br>
+
+        <div class="text-center" style="background-color: rgba(204, 204, 204, 0.66); padding: 30px 15px;">
+            <h2 class="mb-2 fw-bold">Zusammenfassung</h2>
+            <div class="mb-2">
+                <h3><b>Lieferkosten</b>: <span></span><%= formatNumber(content?.deliveryFee) %> &nbsp;€ </h3>
+            </div>
+            <div class="mb-2">
+                <h3><b>Produkte</b>: <span></span><%= formatNumber(content?.total - content?.deliveryFee) %> &nbsp;€ </h3>
+            </div>
+            <div class="mb-2">
+                <h3><b>Gesamt</b>: <span></span><%= formatNumber(content?.total) %> &nbsp;€ </h3>
+            </div>
+        </div>
+
+
+</div>
+
+
+</body>
+</html>
