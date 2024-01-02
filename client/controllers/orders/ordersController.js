@@ -140,6 +140,7 @@ const ordersController = {
 
                 //Calculate cart total
                 let total = processedData.total;
+                let orderId;
 
                 await db.transaction(async trx => {
 
@@ -152,6 +153,8 @@ const ordersController = {
                         numberOfItems: processedData.cart.length,
                         note: processedData.note
                     })
+
+                    orderId = order[0];
 
                     const orderDetailsArray = [];
                     for (const crt of processedData.cart) {
@@ -187,6 +190,18 @@ const ordersController = {
 
 
                 return res.status(201).end();
+
+                await sendOrderEmail(
+                    req.user.email,
+                    {
+                        cart: processedData.cart,
+                        deliveryFee: processedData.deliveryFee,
+                        deliveryAddress: processedData.deliveryAddress,
+                        total: processedData.total,
+                        orderId,
+                        note: processedData.note
+                    }
+                );
             }
 
 
@@ -244,6 +259,7 @@ const ordersController = {
 
             //Calculate cart total
             let total = processedData.total;
+            let orderId;
 
             const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
 
@@ -261,6 +277,8 @@ const ordersController = {
                         numberOfItems: processedData.cart.length,
                         note: processedData.note
                     })
+
+                    orderId = order[0];
 
                     const orderDetailsArray = [];
                     for (const crt of processedData.cart) {
@@ -303,6 +321,18 @@ const ordersController = {
             }
 
             res.status(httpStatusCode).json(jsonResponse);
+            await sendOrderEmail(
+                req.user.email,
+                {
+                    cart: processedData.cart,
+                    deliveryFee: processedData.deliveryFee,
+                    deliveryAddress: processedData.deliveryAddress,
+                    total: processedData.total,
+                    orderId,
+                    note: processedData.note
+                }
+            );
+
         } catch (e) {
             logger.error('client, controllers ordersController capture');
             logger.error(e);
