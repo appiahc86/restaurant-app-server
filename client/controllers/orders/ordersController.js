@@ -189,7 +189,7 @@ const ordersController = {
                 })// ./Transaction
 
 
-                return res.status(201).end();
+                 res.status(201).end();
 
                 await sendOrderEmail(
                     req.user.email,

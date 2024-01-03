@@ -6,7 +6,7 @@ const stripe = require('stripe')(`${config.STRIPE_SECRET_KEY}`);
 
 // Match the raw body to content type application/json
 // If you are using Express v4 - v4.16 you need to use body-parser, not express, to retrieve the request body
-const endpointSecret = "whsec_19e897f8c10432835c1cd710e9166aa8afa656bda0eebfb58ba35435148a1ca4";
+const endpointSecret = config.STRIPE_WEBHOOK_SECRET;
 const stripeWebHookController = {
 
     webhook: async (request, response) => {

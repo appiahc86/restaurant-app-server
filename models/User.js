@@ -7,6 +7,8 @@ const User = async () => {
             table.bigIncrements('id').primary();
             table.string('name');
             table.string('email').unique();
+            table.string('verificationToken');
+            table.boolean('isVerified').defaultTo(false);
             table.string('password').notNullable();
             table.string('passwordResetCode', 10);
             table.mediumint('specialCode').notNullable(); //will use in JWT compare

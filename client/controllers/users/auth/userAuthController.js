@@ -7,7 +7,7 @@ const axios = require("axios");
 const  logger = require("../../../../winston");
 const moment = require("moment");
 const CryptoJS = require("crypto-js");
-const { passwordResetMail } = require("../../../../functions/sendMail")
+const { passwordResetMail, verificationEmail } = require("../../../../functions/sendMail")
 
 
 const userAuthController = {
@@ -36,20 +36,23 @@ const userAuthController = {
                 return res.status(400).send("Entschuldigung, etwas ist schief gelaufen");
             }
             const specialCode = generateRandomNumber();
+            const verificationToken = Math.random().toString(36).substring(7);
 
             //Save to db
            const user = await db("users").insert({
                 name,
                 email: email.toLowerCase(),
+                verificationToken,
                 password: hash,
                 specialCode,
                 createdAt: moment().format("YYYY-MM-DD HH:mm:ss")
             });
 
+           // const token = jwt.sign({ id: user[0], specialCode }, config.JWT_SECRET);
+            res.status(201).end();
 
-
-           const token = jwt.sign({ id: user[0], specialCode }, config.JWT_SECRET);
-            res.status(201).send({token: token});
+            //send verification email to user
+            await verificationEmail(email.toLowerCase(), verificationToken)
 
 
         }catch (e) {

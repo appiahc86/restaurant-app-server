@@ -11,7 +11,7 @@ module.exports = {
             await resend.emails.send({
                 from: 'Pizza Wunderbar <info@nantylotto.com>',
                 to: [`${to}`],
-                subject: 'Password Reset',
+                subject: 'Passwort zurücksetzen',
                 html:
                     `<p>Bitte verwenden Sie den untenstehenden Code, um Ihr Passwort zurückzusetzen</p>
                     <br>
@@ -26,7 +26,32 @@ module.exports = {
             return false;
         }
 
-    }
+    },
+
+    //email verification
+    verificationEmail: async (to, token) => {
+        try {
+            const resend = new Resend(config.RENDER_API_KEY);
+
+            await resend.emails.send({
+                from: 'Pizza Wunderbar <info@nantylotto.com>',
+                to: [`${to}`],
+                subject: 'E-Mail-Verifizierung',
+                html:
+                    `<p>Sehr geehrter Benutzer, Ihr E-Mail-Bestätigungscode lautet</p>
+                    <br>
+                        <h1 style="text-align: center; font-weight: bold;"><mark>${token}</mark></h1>`
+            });
+
+            return true;
+
+        }catch (e) {
+            logger.error('Email not sent');
+            logger.error(e);
+            return false;
+        }
+
+    },
 }
 
 

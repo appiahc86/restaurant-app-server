@@ -11,7 +11,7 @@ const Payment = async () => {
             table.datetime('paymentDate').index();
             table.string('paymentMethod').index();
             table.decimal('amount');
-            table.enum('status', ['successful', 'pending', 'failed', 'refund']).defaultTo('pending').index();
+            table.enum('status', ['successful', 'pending', 'refunding', 'failed', 'refund']).defaultTo('pending').index();
             table.engine('InnoDB');
 
             table.foreign('orderId').references('id').inTable('orders').onDelete('cascade')
