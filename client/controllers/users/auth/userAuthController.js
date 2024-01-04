@@ -67,6 +67,120 @@ const userAuthController = {
     }, // ./Register
 
 
+
+    //......................Verify Email...........................
+    verifyEmail: async (req, res) => {
+
+        try {
+
+            const {email, verificationCode} = req.body;
+
+
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            //Validation
+            if (!email.trim() || !email.match(emailRegex)){
+                // Please reload the page and try again
+                return res.status(400).send("Bitte laden Sie die Seite neu und versuchen Sie es erneut");
+            }
+
+            //find user in db
+            const user = await db("users")
+                .select('id', 'name', 'email','verificationToken',
+                    'deliveryAddress', 'specialCode', 'isActive')
+                .where("email", email.trim().toLowerCase())
+                .limit(1);
+
+            // return res.status(400).send(`${user[0].verificationToken}`)
+            //If user does not exist
+            // Please reload the page and try again
+            if (!user.length) return res.status(400).send("Bitte laden Sie die Seite neu und versuchen Sie es erneut")
+
+            //Check if verification code matches
+            if (verificationCode.trim().toLowerCase() !== user[0].verificationToken.trim().toLowerCase()){
+                //Sorry, you entered a wrong verification code
+                return res.status(400).send("Entschuldigung, Sie haben einen falschen Bestätigungscode eingegeben")
+            }
+
+            //if user is not mark as active (account suspended)
+            if (!!user[0].isActive === false) return res.status(400).send("Leider ist dieses Konto gesperrt. Bitte wenden Sie sich an den Administrator");
+
+            //Generate JWT token
+            const token = jwt.sign({ id: user[0].id, specialCode: user[0].specialCode }, config.JWT_SECRET);
+
+            //Mark as verified
+            await db("users")
+                .where("email", email.trim().toLowerCase())
+                .update({
+                    verificationToken: "",
+                    isVerified: true
+                })
+                .limit(1);
+
+            res.status(200).send({
+                token,
+                user: {
+                    name: user[0].name,
+                    email: user[0].email,
+                    deliveryAddress: JSON.parse(user[0].deliveryAddress)
+                }
+            })
+
+        }catch (e) {
+            logger.error('client, userAuthController verify');
+            logger.error(e);
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
+        } // ./Catch block
+    }, // ./Verify Email
+
+
+    //......................Resend Verification code...........................
+    resendVerification: async (req, res) => {
+
+        try {
+
+            const {email} = req.body;
+
+
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            //Validation
+            if (!email.trim() || !email.match(emailRegex)){
+                // Please reload the page and try again
+                return res.status(400).send("Bitte laden Sie die Seite neu und versuchen Sie es erneut");
+            }
+
+            //find user in db
+            const user = await db("users")
+                .select('id')
+                .where("email", email.trim().toLowerCase())
+                .limit(1);
+
+            //If user does not exist
+            // Please reload the page and try again
+            if (!user.length) return res.status(400).send("Bitte laden Sie die Seite neu und versuchen Sie es erneut")
+
+            const verificationToken = Math.random().toString(36).substring(7);
+
+            //send verification email to user
+            const sendMail = await verificationEmail(email.toLowerCase(), verificationToken);
+
+            if (sendMail) {
+                //update verification token in db
+                await db("users")
+                    .where("email", email.trim().toLowerCase())
+                    .update({verificationToken})
+                return res.status(200).end()
+            }else return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
+
+
+        }catch (e) {
+            logger.error('client, userAuthController login');
+            logger.error(e);
+            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
+        } // ./Catch block
+    }, // ./Resend Verification code
+
+
+
     //......................Login...........................
     login: async (req, res) => {
         const {email, password} = req.body;
@@ -80,7 +194,7 @@ const userAuthController = {
 
             //find user in db
             const user = await db("users")
-                .select('id', 'name', 'email','password',
+                .select('id', 'name', 'email','password', 'isVerified',
                      'deliveryAddress', 'specialCode', 'isActive')
                 .where("email", email.toLowerCase())
                 .limit(1);
@@ -100,6 +214,19 @@ const userAuthController = {
             //if user is not mark as active (account suspended)
             if (!!user[0].isActive === false) return res.status(400).send("Leider ist dieses Konto gesperrt. Bitte wenden Sie sich an den Administrator");
 
+
+            //If user is not verified
+            if (!!user[0].isVerified === false){
+                const verificationToken = Math.random().toString(36).substring(7);
+                await db("users").where("email", email.toLowerCase())
+                    .update({verificationToken});
+                const emailSent = await verificationEmail(email.toLowerCase(), verificationToken);
+                if (emailSent){
+                    return res.status(206).end();
+                }else return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
+
+            }
+
             //Generate JWT token
             const token = jwt.sign({ id: user[0].id, specialCode: user[0].specialCode }, config.JWT_SECRET);
 
@@ -118,7 +245,6 @@ const userAuthController = {
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
         } // ./Catch block
     }, // ./Login
-
 
 
         //...............Request password reset code....................

@@ -240,7 +240,7 @@ const ordersController = {
     },
 
 
-    //Capture
+    //Capture oder from paypal
     capture: async (req, res) => {
         try {
 

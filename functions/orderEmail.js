@@ -10,7 +10,7 @@ const sendOrderEmail = async (to, content) => {
             if (err) {
                 console.log(err);
             } else {
-                const resend = new Resend(config.RENDER_API_KEY);
+                const resend = new Resend(config.RESEND_API_KEY);
 
                 await resend.emails.send({
                     from: 'Pizza Wunderbar <info@nantylotto.com>',

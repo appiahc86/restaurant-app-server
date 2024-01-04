@@ -6,7 +6,7 @@ module.exports = {
     //Send password reset mail
     passwordResetMail: async (to, code) => {
         try {
-            const resend = new Resend(config.RENDER_API_KEY);
+            const resend = new Resend(config.RESEND_API_KEY);
 
             await resend.emails.send({
                 from: 'Pizza Wunderbar <info@nantylotto.com>',
@@ -21,7 +21,7 @@ module.exports = {
             return true;
 
         }catch (e) {
-            logger.error('Email not sent');
+            logger.error('Password reset email not sent');
             logger.error(e);
             return false;
         }
@@ -31,7 +31,7 @@ module.exports = {
     //email verification
     verificationEmail: async (to, token) => {
         try {
-            const resend = new Resend(config.RENDER_API_KEY);
+            const resend = new Resend(config.RESEND_API_KEY);
 
             await resend.emails.send({
                 from: 'Pizza Wunderbar <info@nantylotto.com>',
@@ -46,7 +46,7 @@ module.exports = {
             return true;
 
         }catch (e) {
-            logger.error('Email not sent');
+            logger.error('Verification Email not sent');
             logger.error(e);
             return false;
         }

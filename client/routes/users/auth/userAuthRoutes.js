@@ -6,6 +6,11 @@ const userAuthController = require("../../../controllers/users/auth/userAuthCont
 //Register new user
 router.post("/register", userAuthController.create);
 
+//Verify email
+router.post("/verify-email", userAuthController.verifyEmail);
+
+//Resend email verification code
+router.post("/resend-verification-code", userAuthController.resendVerification);
 
 //Login
 router.post('/login', userAuthController.login);
