@@ -1,9 +1,9 @@
 const db = require("../config/db");
 
 const ZipCodes = async () => {
-    if (!await db.schema.hasTable('zipCodes')){
+    if (!await db.schema.hasTable('zipcodes')){
 
-        await db.schema.createTable('zipCodes', table => {
+        await db.schema.createTable('zipcodes', table => {
             table.bigIncrements('id').primary();
             table.string('zipCode').notNullable().unique().index();
             table.string('town');

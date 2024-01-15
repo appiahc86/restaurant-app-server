@@ -6,9 +6,9 @@ const zipCodesController = {
     //Get all zipcodes
     index: async (req, res) => {
         try{
-            const zipCodes = await db("zipCodes");
+            const zipcodes = await db("zipcodes");
 
-            return res.status(200).send({zipCodes});
+            return res.status(200).send({zipcodes});
 
         }catch (e) {
             logger.error('admin, controllers zipcodes index');

@@ -25,6 +25,7 @@ const userIndexController = {
                     name,
                     deliveryAddress: JSON.stringify(deliveryAddress)
                 })
+
             return res.status(200).send({deliveryAddress});
 
         }catch (e) {

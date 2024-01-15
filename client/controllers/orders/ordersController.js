@@ -221,7 +221,7 @@ const ordersController = {
             const order = await db("orders")
                 .join("orderDetails","orders.id","orderDetails.orderId")
                 .select( "orders.orderDate", "orders.total","orders.deliveryAddress",
-                    "orders.deliveryFee", "orders.deliveryStatus",
+                    "orders.deliveryFee", "orders.deliveryStatus", "orders.note",
                     "orderDetails.qty", "orderDetails.price",
                     "orderDetails.menuItemName", "orderDetails.choiceOf")
                 .where('orders.id', orderId)

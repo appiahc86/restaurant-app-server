@@ -3,10 +3,7 @@ const bcrypt = require("bcryptjs");
 const config = require("../../../../config/config");
 const jwt = require("jsonwebtoken");
 const { generateRandomNumber } = require("../../../../functions");
-const axios = require("axios");
 const  logger = require("../../../../winston");
-const moment = require("moment");
-const CryptoJS = require("crypto-js");
 const { passwordResetMail } = require("../../../../functions/sendMail")
 
 
@@ -34,7 +31,6 @@ const userAuthController = {
     //......................Login...........................
     login: async (req, res) => {
         const {email, password} = req.body;
-
 
         try {
 
@@ -99,7 +95,7 @@ const userAuthController = {
             if (!email.trim()) return res.status(400).send("Bitte E-Mail-Adresse angeben");
             if (!email.match(emailRegex)) return res.status(400).send("Bitte geben Sie eine gültige E-Mail-Adresse ein");
 
-            const user = await db('users').where({email: email.toLowerCase()}).limit(1);
+            const user = await db('adminusers').where({email: email.toLowerCase()}).limit(1);
             if (!user.length) return res.status(400).send("Leider existiert dieser Benutzer nicht");
 
 
@@ -111,7 +107,7 @@ const userAuthController = {
 
 
             //...........................Send reset email code to user .....................
-            const emailSent = await passwordResetMail(email.toLowerCase(), code);
+            const emailSent = await passwordResetMail(email.trim().toLowerCase(), code);
             if (!emailSent) return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
 
             return res.status(200).end();

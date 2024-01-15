@@ -1,24 +1,46 @@
-const { Resend }  = require("resend");
 const config = require("../config/config");
 const  logger = require("../winston");
 const ejs = require("ejs");
+
+const Mailjet = require('node-mailjet');
+
+const mailjet = Mailjet.apiConnect(
+    config.MAILJET_API_KEY,
+    config.MAILJET_API_SECRETE
+);
 
 const sendOrderEmail = async (to, content) => {
 
     try { //TODO change double back slashes before deployment
         ejs.renderFile(__dirname + '\\orderMail.ejs', { to, content }, async (err, data) => {
             if (err) {
-                console.log(err);
+                logger.error("order email");
+                logger.error(err);
             } else {
-                const resend = new Resend(config.RESEND_API_KEY);
-
-                await resend.emails.send({
-                    from: 'Pizza Wunderbar <info@nantylotto.com>',
-                    to: [`${to}`],
-                    subject: 'Bestellbestätigung',
-                    html: data
-                });
+                await mailjet
+                    .post('send', { version: 'v3.1' })
+                    .request({
+                        Messages: [
+                            {
+                                From: {
+                                    Email: "info@nantylotto.com",
+                                    Name: "Pizza Wunderbar"
+                                },
+                                To: [
+                                    {
+                                        Email: to,
+                                        Name: ""
+                                    }
+                                ],
+                                Subject: "Bestellbestätigung",
+                                TextPart: "",
+                                HTMLPart: data
+                            }
+                        ]
+                    })
             }
+
+
         });
     }catch (e) {
             logger.error('Order Email not sent');

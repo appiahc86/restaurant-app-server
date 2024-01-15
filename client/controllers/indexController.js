@@ -53,7 +53,8 @@ const indexController = {
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
         }
 
-    }
+    },
+
 
 }
 

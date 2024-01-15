@@ -87,7 +87,7 @@ const calculateOrder = async (cart, deliveryAddress, paymentMethod, note) => {
            deliveryAddress,
            deliveryFee,
            paymentMethod,
-           total: total + deliveryFee,
+           total: (total + deliveryFee).toFixed(2),
            note
        }
 

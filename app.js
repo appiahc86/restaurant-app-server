@@ -11,13 +11,13 @@ const uploader = require("express-fileupload");
 const logger = require("./winston");
 const transactionJob = require("./cron");
 
+
 //Set TimeZone
 process.env.TZ = 'Europe/Berlin';
 
 app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cors());
-
 
 // express-file upload middleware
 app.use(
@@ -96,13 +96,14 @@ app.use("/orders", ordersRouter);
 
 
 //Load Admin routes
-const adminUserAuthRouter = require("./admin/routes/users/auth/userAuthRoutes")
+const adminUserAuthRouter = require("./admin/routes/users/auth/userAuthRoutes");
+const dashboardUsers = require("./admin/routes/users/index");
 const adminIndexRouter = require("./admin/routes/indexRouter");
 const adminDashboardRouter = require("./admin/routes/dashboardRouter");
 const adminMenuRouter = require('./admin/routes/menu/menuRouter');
 const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter");
 const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
-const settingsRouter = require("./admin/routes/settings/settingsRouter")
+const settingsRouter = require("./admin/routes/settings/settingsRouter");
 const zipCodesRouter = require("./admin/routes/zipCodes/zipCodesRouter");
 
 
@@ -110,6 +111,7 @@ const zipCodesRouter = require("./admin/routes/zipCodes/zipCodesRouter");
 app.use("/admin", adminIndexRouter);
 app.use("/admin/dashboard", adminDashboardRouter);
 app.use("/admin/users/auth", adminUserAuthRouter);
+app.use("/admin/users/dashboard", dashboardUsers);
 app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
 app.use("/admin/orders", adminOrdersRouter);
@@ -130,7 +132,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
 
     logger.error(err.message, err);
-    return res.status(400).send('Sorry, Entschuldigung, etwas ist schief gelaufen');
+    return res.status(400).send('Entschuldigung, etwas ist schief gelaufen');
 
 });
 
@@ -140,6 +142,5 @@ if (process.env.NODE_ENV !== 'production'){
     server.listen(port, async () => {
         logger.info(`server running on port ${port}`);
     })
-
 
 }else server.listen();

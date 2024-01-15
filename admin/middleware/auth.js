@@ -14,7 +14,7 @@ const auth = async (req, res, next) => {
         const decoded = jwt.verify(token, config.JWT_SECRET);
         const user = await db("adminUsers")
             .where({id: decoded.id})
-            .select("id", "role", "isActive","specialCode")
+            .select("id", "email","role", "isActive","specialCode")
             .limit(1);
 
         //If user not found

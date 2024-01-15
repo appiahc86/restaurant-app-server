@@ -29,7 +29,6 @@ const menuItemsController = {
     index: async (req, res) => {
         try{
 
-            console.log(moment().format())
             // const page = req.query.page || 1;
             // const pageSize = req.query.pageSize || 15;
 
