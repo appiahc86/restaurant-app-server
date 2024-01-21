@@ -1,10 +1,10 @@
 const db = require("../config/db");
 
 const AdminUser = async () => {
-    if (!await db.schema.hasTable('adminUsers')){
+    if (!await db.schema.hasTable('adminusers')){
 
-        await db.schema.createTable('adminUsers', table => {
-            table.increments('id').primary();
+        await db.schema.createTable('adminusers', table => {
+            table.bigIncrements('id').primary();
             table.string('name').notNullable();
             table.string('email').unique();
             table.tinyint('role').defaultTo(2);

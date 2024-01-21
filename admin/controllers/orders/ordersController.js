@@ -9,17 +9,18 @@ const ordersController = {
     index: async (req, res) => {
         try{
 
-
             const page = req.query.page || 1;
             const pageSize = req.query.pageSize || 10;
-            
 
             const orderDate = moment().format("YYYY-MM-DD");
 
             const orders = await db("orders")
-                .select("id", "orderDate", "total", "numberOfItems")
-                .where("orderDate", ">=", orderDate)
-                .where("deliveryStatus","waiting")
+                .join("payments", "orders.id", "=", "payments.orderId")
+                .select("orders.id", "orders.orderDate",
+                    "orders.total", "orders.numberOfItems")
+                .where("orders.orderDate", ">=", orderDate)
+                .where("orders.deliveryStatus","waiting")
+                .where("payments.status", "successful")
                 .limit(pageSize)
                 .offset((page - 1) * pageSize);
 
@@ -50,11 +51,15 @@ const ordersController = {
 
             const order = await db("orders")
                 .join("orderDetails", "orders.id", "=", "orderDetails.orderId")
+                .join("payments", "orders.id", "=","payments.orderId")
                 .select( "orders.orderDate", "orders.total", "orders.deliveryAddress",
                     "orders.deliveryFee", "orders.note", "orders.deliveryStatus",
                     "orderDetails.id as orderDetailsId","orderDetails.menuItemName",
-                    "orderDetails.qty", "orderDetails.price", "orderDetails.choiceOf")
+                    "orderDetails.qty", "orderDetails.price",
+                    "orderDetails.choiceOf", "payments.paymentMethod")
                 .where("orders.id", id);
+
+
 
              order.map((ord) => {
                 ord.deliveryAddress = JSON.parse(ord.deliveryAddress);
@@ -78,7 +83,6 @@ const ordersController = {
                 .where("orders.id", id)
                 .update({deliveryStatus: "delivering"});
 
-
             return res.status(200).end();
 
         }catch (e) {
@@ -88,24 +92,6 @@ const ordersController = {
         }
     },
 
-
-    //cancel order
-    cancelOrder: async (req, res) => {
-        try {
-            const id = req.body.id;
-
-            await db("orders")
-                .where("orders.id", id)
-                .update({deliveryStatus: "canceled"});
-
-            return res.status(200).end();
-
-        }catch (e) {
-            logger.error('admin, controllers ordersController cancelOrder');
-            logger.error(e);
-            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
-        }
-    }, // ./cancel order
 
     //Get delivering orders
     delivering: async (req, res) => {
@@ -141,28 +127,6 @@ const ordersController = {
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
         }
     }, // ./get delivering orders
-
-
-
-    //Mark as delivered
-    delivered: async (req, res) => {
-        try {
-            const id = req.body.id;
-
-            await db("orders")
-                .where("orders.id", id)
-                .update({deliveryStatus: "delivered"});
-
-
-            return res.status(200).end();
-
-        }catch (e) {
-            logger.error('admin, controllers ordersController delivered');
-            logger.error(e);
-            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
-        }
-    },
-
 
 }
 

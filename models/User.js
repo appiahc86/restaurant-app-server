@@ -19,6 +19,15 @@ const User = async () => {
         });
 
 
+        await db("users").insert({
+            name: 'guest',
+            email: "guest@guestemail.cco",
+            password: "$2a$10$Cr3fGxuNcFc0AhTuVvjDDOChtK77DBjH7wKtUhV5R5zgVRM.GqKK9",
+            isVerified: true,
+            specialCode: 454332
+        })
+
+
     }
 
 

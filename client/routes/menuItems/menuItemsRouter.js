@@ -7,5 +7,4 @@ const menuItemsController = require('../../controllers/menuItems/MenuItemsContro
 //Get menuItems
 router.get('/', menuItemsController.index);
 
-
 module.exports = router;

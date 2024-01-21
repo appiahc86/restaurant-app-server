@@ -1,7 +1,7 @@
 const db = require("../../../config/db");
 const logger = require("../../../winston");
 const moment = require("moment");
-const {generateReferenceNumber} = require("../../../functions");
+const {generateReferenceNumber, generateRandomNumber} = require("../../../functions");
 const { createOrder, captureOrder } = require("../../../functions/payPalFunction");
 const { calculateOrder } = require("../../../functions/calculateOrder");
 const {sendOrderEmail} = require("../../../functions/orderEmail");
@@ -73,7 +73,7 @@ const ordersController = {
                 await db.transaction(async trx => {
 
                     const order = await trx('orders').insert({
-                        userId: req.user.id,
+                        userId: req?.user?.id || 1,
                         orderDate,
                         total: processedData.total,
                         deliveryAddress: processedData.deliveryAddress,
@@ -103,10 +103,8 @@ const ordersController = {
 
 
                     //Insert into payments table
-                    const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
                     await trx('payments').insert({
-                        reference: referenceNumber,
-                        extReference: referenceNumber,
+                        extReference: order[0],
                         orderId: order[0],
                         paymentDate: orderDate,
                         paymentMethod: 'cash',
@@ -119,20 +117,23 @@ const ordersController = {
 
                  res.status(201).end();
 
-                await sendOrderEmail(
-                    req.user.email,
-                    {
-                        cart: processedData.cart,
-                        deliveryFee: processedData.deliveryFee,
-                        deliveryAddress: processedData.deliveryAddress,
-                        total: processedData.total,
-                        orderId,
-                        note: processedData.note
-                    }
+                if (req?.user?.email){
+                    await sendOrderEmail(
+                        req.user.email,
+                        {
+                            cart: processedData.cart,
+                            deliveryFee: processedData.deliveryFee,
+                            deliveryAddress: processedData.deliveryAddress,
+                            total: processedData.total,
+                            orderId,
+                            note: processedData.note
+                        }
                     );
+                }
 
 
-            }
+
+            } // ./if payment is cash
 
 
             // ************************ if Credit Card Payment ************************************
@@ -145,7 +146,7 @@ const ordersController = {
                 await db.transaction(async trx => {
 
                     const order = await trx('orders').insert({
-                        userId: req.user.id,
+                        userId: req?.user?.id || 1,
                         orderDate,
                         total,
                         deliveryAddress: processedData.deliveryAddress,
@@ -175,9 +176,7 @@ const ordersController = {
 
 
                     //Insert into payments table
-                    const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
                     await trx('payments').insert({
-                        reference: referenceNumber,
                         extReference: req.body.extReference,
                         orderId: order[0],
                         paymentDate: orderDate,
@@ -191,17 +190,21 @@ const ordersController = {
 
                  res.status(201).end();
 
-                await sendOrderEmail(
-                    req.user.email,
-                    {
-                        cart: processedData.cart,
-                        deliveryFee: processedData.deliveryFee,
-                        deliveryAddress: processedData.deliveryAddress,
-                        total: processedData.total,
-                        orderId,
-                        note: processedData.note
-                    }
-                );
+                if (req?.user?.email){
+                    await sendOrderEmail(
+                        req.user.email,
+                        {
+                            cart: processedData.cart,
+                            deliveryFee: processedData.deliveryFee,
+                            deliveryAddress: processedData.deliveryAddress,
+                            total: processedData.total,
+                            orderId,
+                            note: processedData.note
+                        }
+                    );
+                } // ./if req?.user?.email
+
+
             }
 
 
@@ -269,7 +272,7 @@ const ordersController = {
                 await db.transaction(async trx => {
 
                     const order = await trx('orders').insert({
-                        userId: req.user.id,
+                        userId: req?.user?.id || 1,
                         orderDate,
                         total,
                         deliveryAddress: processedData.deliveryAddress,
@@ -299,9 +302,7 @@ const ordersController = {
 
 
                     //Insert into payments table
-                    const referenceNumber = generateReferenceNumber(moment()) + req.user.id;
                     await trx('payments').insert({
-                        reference: referenceNumber,
                         extReference: orderID,
                         orderId: order[0],
                         paymentDate: orderDate,
@@ -321,17 +322,21 @@ const ordersController = {
             }
 
             res.status(httpStatusCode).json(jsonResponse);
-            await sendOrderEmail(
-                req.user.email,
-                {
-                    cart: processedData.cart,
-                    deliveryFee: processedData.deliveryFee,
-                    deliveryAddress: processedData.deliveryAddress,
-                    total: processedData.total,
-                    orderId,
-                    note: processedData.note
-                }
-            );
+
+            if (req?.user?.email){
+                await sendOrderEmail(
+                    req.user.email,
+                    {
+                        cart: processedData.cart,
+                        deliveryFee: processedData.deliveryFee,
+                        deliveryAddress: processedData.deliveryAddress,
+                        total: processedData.total,
+                        orderId,
+                        note: processedData.note
+                    }
+                );
+            }
+
 
         } catch (e) {
             logger.error('client, controllers ordersController capture');

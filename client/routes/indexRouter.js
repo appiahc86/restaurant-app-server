@@ -11,7 +11,7 @@ const auth = require("../middleware/auth");
 router.post("/zipcode", indexController.getZipcode);
 
 //Generate payment intent
-router.post("/payment-intent", auth, indexController.paymentIntent);
+router.post("/payment-intent", indexController.paymentIntent);
 
 //Stripe webhook
 router.post("/webhook/stripe", express.raw({type: 'application/json'}), stripeWebHookController.webhook);

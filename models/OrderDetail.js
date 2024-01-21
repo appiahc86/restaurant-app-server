@@ -1,9 +1,9 @@
 const db = require("../config/db");
 
 const OrderDetail = async () => {
-    if (!await db.schema.hasTable('orderDetails')){
+    if (!await db.schema.hasTable('orderdetails')){
 
-        await db.schema.createTable('orderDetails', table => {
+        await db.schema.createTable('orderdetails', table => {
             table.bigIncrements('id').primary();
             table.bigInteger('orderId').unsigned().notNullable();
             table.bigInteger('menuItemId').unsigned();

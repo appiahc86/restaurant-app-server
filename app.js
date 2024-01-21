@@ -5,7 +5,6 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const runMigration = require("./models/index");
-const runTriggers = require("./models/triggers/index");
 const db = require("./config/db");
 const uploader = require("express-fileupload");
 const logger = require("./winston");
@@ -34,11 +33,11 @@ transactionJob.start();
 
     //Create database tables
 (async () => {
-    // await db.raw(`SET time_zone = 'UTC';`);
+
     await db.raw("SET FOREIGN_KEY_CHECKS=0");
     await runMigration();
-    // await runTriggers();
     await db.raw("SET FOREIGN_KEY_CHECKS=1");
+
 })()
 
 const port = process.env.port || 3000;
@@ -105,6 +104,7 @@ const adminMenuItemsRouter = require("./admin/routes/menuItems/menuItemsRouter")
 const adminOrdersRouter = require("./admin/routes/orders/ordersRouter");
 const settingsRouter = require("./admin/routes/settings/settingsRouter");
 const zipCodesRouter = require("./admin/routes/zipCodes/zipCodesRouter");
+const qrCodeRouter = require("./admin/routes/qrCode/qrCodeRouter");
 
 
 //Use Admin routes
@@ -116,8 +116,8 @@ app.use("/admin/menu", adminMenuRouter);
 app.use("/admin/menuItems", adminMenuItemsRouter);
 app.use("/admin/orders", adminOrdersRouter);
 app.use("/admin/settings", settingsRouter);
-app.use("/admin/zipcodes", zipCodesRouter)
-
+app.use("/admin/zipcodes", zipCodesRouter);
+app.use("/admin/qrcode", qrCodeRouter);
 
 
 app.use(express.static('public'));

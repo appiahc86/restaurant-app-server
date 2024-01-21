@@ -33,7 +33,7 @@ const dashboardUsers = {
             if (name.trim().length < 4) return res.status(400).send("Der Name muss mindestens vier Zeichen lang sein");
             if (!email.trim()) return res.status(400).send("Bitte E-Mail-Adresse angeben");
             if (!email.match(emailRegex)) return res.status(400).send("Bitte geben Sie eine gültige E-Mail-Adresse ein");
-            if (role.toString() !== "1" && role.toString() !== "2"){
+            if (role.toString() !== "1" && role.toString() !== "4" && role.toString() !== "5"){
                 logger.info("User role tempered with in admin create user");
                 return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
             }
@@ -93,7 +93,7 @@ const dashboardUsers = {
             if (name.trim().length < 4) return res.status(400).send("Der Name muss mindestens vier Zeichen lang sein");
             if (!email.trim()) return res.status(400).send("Bitte E-Mail-Adresse angeben");
             if (!email.match(emailRegex)) return res.status(400).send("Bitte geben Sie eine gültige E-Mail-Adresse ein");
-            if (role.toString() !== "1" && role.toString() !== "2"){
+            if (role.toString() !== "1" && role.toString() !== "4" && role.toString() !== "5"){
                 logger.info("User role tempered with in admin create user");
                 return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
             }
