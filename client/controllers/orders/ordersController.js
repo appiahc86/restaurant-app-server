@@ -5,6 +5,8 @@ const {generateReferenceNumber, generateRandomNumber} = require("../../../functi
 const { createOrder, captureOrder } = require("../../../functions/payPalFunction");
 const { calculateOrder } = require("../../../functions/calculateOrder");
 const {sendOrderEmail} = require("../../../functions/orderEmail");
+const sendOrderSms = require("../../../functions/sendOrderSms");
+const orderTime = require("../../../functions/orderTime");
 
 
 
@@ -35,7 +37,12 @@ const ordersController = {
     create: async (req, res) => {
         try{
 
-            //Check if orders are allowed
+            //*************Check if orders are allowed**************
+
+            const canPlaceOrder = orderTime();
+            if (!canPlaceOrder) return res.status(400)
+                .json("Entschuldigung, die Bestellungen sind derzeit geschlossen");
+
             const settingsQuery = await db("settings")
                 .where("id", 1)
                 .select("appConfig");
@@ -43,7 +50,6 @@ const ordersController = {
             const result = JSON.parse(settingsQuery[0].appConfig);
             if (!result.allowOrders) return res.status(400)
                 .json("Bestellungen sind derzeit leider nicht möglich. Bitte versuchen Sie es später noch einmal.");
-
 
 
             const {cart, deliveryAddress, paymentMethod, note} = req.body;
@@ -68,7 +74,7 @@ const ordersController = {
             if (paymentMethod === "cash"){
 
                 let total = processedData.total;
-                let orderId;
+                let orderId = "";
 
                 await db.transaction(async trx => {
 
@@ -117,6 +123,7 @@ const ordersController = {
 
                  res.status(201).end();
 
+                //Send order email
                 if (req?.user?.email){
                     await sendOrderEmail(
                         req.user.email,
@@ -131,6 +138,9 @@ const ordersController = {
                     );
                 }
 
+                //send order SMS
+                await sendOrderSms(processedData.deliveryAddress.phone, orderId);
+
 
 
             } // ./if payment is cash
@@ -141,7 +151,7 @@ const ordersController = {
 
                 //Calculate cart total
                 let total = processedData.total;
-                let orderId;
+                let orderId = "";
 
                 await db.transaction(async trx => {
 
@@ -190,6 +200,8 @@ const ordersController = {
 
                  res.status(201).end();
 
+
+                //send order email
                 if (req?.user?.email){
                     await sendOrderEmail(
                         req.user.email,
@@ -203,6 +215,9 @@ const ordersController = {
                         }
                     );
                 } // ./if req?.user?.email
+
+                //send order SMS
+                await sendOrderSms(processedData.deliveryAddress.phone, orderId);
 
 
             }
@@ -262,7 +277,7 @@ const ordersController = {
 
             //Calculate cart total
             let total = processedData.total;
-            let orderId;
+            let orderId = "";
 
             const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
 
@@ -318,7 +333,8 @@ const ordersController = {
                 await db("payments")
                     .where("extReference", orderID)
                     .andWhere("paymentMethod", "paypal")
-                    .update({status: "successful"})
+                    .update({status: "successful"});
+
             }
 
             res.status(httpStatusCode).json(jsonResponse);
@@ -336,6 +352,9 @@ const ordersController = {
                     }
                 );
             }
+
+            //send order SMS
+            await sendOrderSms(processedData.deliveryAddress.phone, orderId);
 
 
         } catch (e) {

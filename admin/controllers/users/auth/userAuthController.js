@@ -9,25 +9,6 @@ const { passwordResetMail } = require("../../../../functions/sendMail")
 
 const userAuthController = {
 
-    //..............Register a new user........................
-    create: async (req, res) => {
-
-        try {
-
-
-
-        }catch (e) {
-            if (e.code === 'ER_DUP_ENTRY') return res.status(400).send('Entschuldigung, dieser Benutzer existiert bereits');
-            logger.error('admin, userAuthController create');
-            logger.error(e);
-            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
-
-        } // ./Catch block
-
-
-    }, // ./Register
-
-
     //......................Login...........................
     login: async (req, res) => {
         const {email, password} = req.body;
@@ -79,7 +60,6 @@ const userAuthController = {
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
         } // ./Catch block
     }, // ./Login
-
 
 
     //...............Request password reset code....................
@@ -165,6 +145,8 @@ const userAuthController = {
             return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich");
         }
     }
+
+
 
 }
 

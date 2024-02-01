@@ -4,14 +4,13 @@ const endpointSecret = 'whsec_...';
 
 app.post('/webhook', function(request, response) {
     const sig = request.headers['stripe-signature'];
-    const body = request.body;
 
     let event = null;
 
     try {
         event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     } catch (err) {
-        // invalid signature
+        //invalid signature
         response.status(400).end();
         return;
     }

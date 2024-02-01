@@ -1,17 +1,17 @@
 const logger = require("../../winston");
 
-const isDeliveryPerson = async (req, res, next) => {
+const isAdmin = async (req, res, next) => {
 
 
     try {
-        if (req.user.role.toString() === "5"){
+        if (req.user.role.toString() === "1"){
             return next();
         }
         else {
             res.status(403).send("Leider haben Sie keine Berechtigung für diese Ressource");
         }
     }catch (e) {
-        logger.error("isDeliveryPerson Middleware");
+        logger.error("isAdmin Middleware");
         logger.error(e);
         res.status(400).send("Bitte loggen Sie sich ein");
     }
@@ -19,4 +19,4 @@ const isDeliveryPerson = async (req, res, next) => {
 }
 
 
-module.exports =  isDeliveryPerson;
+module.exports =  isAdmin;

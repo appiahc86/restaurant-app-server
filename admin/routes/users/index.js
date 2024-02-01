@@ -3,17 +3,18 @@ const router = express.Router();
 
 const dashboardUsers = require("../../../admin/controllers/users/index");
 const auth = require("../../middleware/auth");
+const isAdmin = require("../../middleware/isAdmin");
 
 //Get dashboard users
-router.get("/", auth, dashboardUsers.index);
+router.get("/", auth, isAdmin, dashboardUsers.index);
 
 //Add user
-router.post("/", auth, dashboardUsers.create);
+router.post("/", auth, isAdmin, dashboardUsers.create);
 
 //Fetch user
-router.post("/view", auth, dashboardUsers.view);
+router.post("/view", auth, isAdmin, dashboardUsers.view);
 
 //Edit user
-router.post("/edit", auth, dashboardUsers.edit);
+router.post("/edit", auth, isAdmin, dashboardUsers.edit);
 
 module.exports = router;

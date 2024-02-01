@@ -1,28 +1,8 @@
 const db = require("../../../config/db");
 const logger = require("../../../winston");
-const moment = require("moment");
-const slugify = require('slugify')
-const fs = require('fs');
-const path = require('path');
-const uploadDir = path.join(__dirname, '../../../public/images/menuItems/');
+
 
 const menuItemsController = {
-
-
-    //Get all menu
-    getMenu: async (req, res) => {
-        try{
-            const menu = await db.select('id', 'name')
-                .from('menu');
-
-            return res.status(200).send({menu});
-
-        }catch (e) {
-            logger.error('admin, controllers menuItemsController getMenu');
-            logger.error(e);
-            return res.status(400).send("Leider war Ihre Anfrage nicht erfolgreich"); //Sorry your request was not successful
-        }
-    }, // ./get all menu
 
 
     //.................Get all menuItems items............................
@@ -50,6 +30,7 @@ const menuItemsController = {
                     .count('* as total')
                 const path = process.env.NODE_ENV !== 'production' ? `http://${req.headers.host}/images/menuItems/`
                     : `https://${req.headers.host}/images/menuItems/`;
+
 
                 return res.status(200).send({
                     menuItems,

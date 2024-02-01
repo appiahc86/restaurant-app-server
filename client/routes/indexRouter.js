@@ -7,11 +7,17 @@ const stripeWebHookController = require("../controllers/stripeWebHookController"
 const auth = require("../middleware/auth");
 
 
-//get zip code
+//Get all zip codes
+router.get("/zipcodes", indexController.getAllZipCodes);
+
+//get one zip code
 router.post("/zipcode", indexController.getZipcode);
 
 //Generate payment intent
 router.post("/payment-intent", indexController.paymentIntent);
+
+//Request sms code
+router.post("/sms", indexController.requestSms);
 
 //Stripe webhook
 router.post("/webhook/stripe", express.raw({type: 'application/json'}), stripeWebHookController.webhook);
