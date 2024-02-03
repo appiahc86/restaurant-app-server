@@ -37,7 +37,7 @@ const ordersController = {
     create: async (req, res) => {
         try{
 
-            //*************Check if orders are allowed**************
+            //*************Check if orders are allowed **************
 
             const canPlaceOrder = orderTime();
             if (!canPlaceOrder) return res.status(400)

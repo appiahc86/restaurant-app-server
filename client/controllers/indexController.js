@@ -97,6 +97,9 @@ const indexController = {
 
             const encryptedVerificationCode = CryptoJS.AES.encrypt(`${code}`, 'secretKey@').toString();
 
+            if (process.env.NODE_ENV !== 'production'){
+                return res.status(200).json({code: CryptoJS.AES.encrypt(`202020`, 'secretKey@').toString()});
+            }
 
 
             const response = await axios.post("https://dkegk8.api.infobip.com/sms/2/text/advanced",

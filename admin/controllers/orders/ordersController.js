@@ -56,7 +56,8 @@ const ordersController = {
                     "orders.deliveryFee", "orders.note", "orders.deliveryStatus",
                     "orderDetails.id as orderDetailsId","orderDetails.menuItemName",
                     "orderDetails.qty", "orderDetails.price",
-                    "orderDetails.choiceOf", "payments.paymentMethod")
+                    "orderDetails.choiceOf", "payments.paymentMethod",
+                    "payments.status as paymentStatus")
                 .where("orders.id", id);
 
 

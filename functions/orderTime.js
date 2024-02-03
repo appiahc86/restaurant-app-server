@@ -3,7 +3,6 @@ const moment = require("moment");
 
 const orderTime = () => {
 
-
     const today = moment().day();
 
     //If is Sunday

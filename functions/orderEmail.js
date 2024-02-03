@@ -12,7 +12,7 @@ const mailjet = Mailjet.apiConnect(
 const sendOrderEmail = async (to, content) => {
 
     try { //TODO change double back slashes before deployment
-        ejs.renderFile(__dirname + '\\orderMail.ejs', { to, content }, async (err, data) => {
+        ejs.renderFile(__dirname + '/orderMail.ejs', { to, content }, async (err, data) => {
             if (err) {
                 logger.error("order email");
                 logger.error(err);
